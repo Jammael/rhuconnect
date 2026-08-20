@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\NewUserCreated;
+use App\Notifications\UserAccountActivated;
+use App\Notifications\UserAccountDeactivated;
+use App\Support\AdministratorNotifications;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -90,6 +94,8 @@ class UserManagementController extends Controller
             'target_role' => $user->role?->name,
             'target_status' => $user->account_status,
         ]);
+
+        AdministratorNotifications::send(new NewUserCreated($user));
 
         return redirect()
             ->route('admin.users.show', $user)
@@ -185,6 +191,12 @@ class UserManagementController extends Controller
                 'original_status' => $originalStatus,
                 'new_status' => $user->account_status,
             ],
+        );
+
+        AdministratorNotifications::send(
+            $user->account_status === 'ACTIVE'
+                ? new UserAccountActivated($user)
+                : new UserAccountDeactivated($user)
         );
 
         return back()->with('status', 'User account status updated successfully.');

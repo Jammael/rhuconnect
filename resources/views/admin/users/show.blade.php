@@ -20,12 +20,16 @@
         </div>
 
         @if (session('status'))
-            <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
-                {{ session('status') }}
-            </div>
+            <script>
+                window.addEventListener('DOMContentLoaded', () => {
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: { message: @json(session('status')), type: 'success' },
+                    }));
+                });
+            </script>
         @endif
 
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
+        <div class="card-hover rounded-xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
             <dl class="grid gap-6 md:grid-cols-2">
                 <div>
                     <dt class="text-sm font-semibold text-slate-500">Name</dt>

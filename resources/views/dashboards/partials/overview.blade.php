@@ -13,7 +13,7 @@
 <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
     @foreach ($stats as $stat)
         @php $tone = $toneClasses[$stat['tone']] ?? $toneClasses['green']; @endphp
-        <article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
+        <article class="card-hover rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
             <div class="flex items-start justify-between gap-4">
                 <p class="text-sm font-bold text-slate-500">{{ $stat['label'] }}</p>
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $tone['icon'] }}">
@@ -33,7 +33,7 @@
 </div>
 
 <div class="mt-6 grid gap-6 xl:grid-cols-3">
-    <section class="min-w-0 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 xl:col-span-2">
+    <section class="card-hover min-w-0 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 xl:col-span-2">
         <div class="border-b border-slate-100 px-5 py-4">
             <h3 class="text-lg font-extrabold text-slate-900">{{ $primary['title'] }}</h3>
         </div>
@@ -86,7 +86,7 @@
                     $tone = $toneClasses[$action['tone']] ?? $toneClasses['green'];
                     $href = isset($action['route']) && $action['route'] && Route::has($action['route']) ? route($action['route']) : '#';
                 @endphp
-                <a href="{{ $href }}" class="group flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:border-green-100 hover:bg-green-50/50">
+                <a href="{{ $href }}" class="card-hover group flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:border-green-100 hover:bg-green-50/50">
                     <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl {{ $tone['icon'] }}">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M12 5v14" />
@@ -109,7 +109,7 @@
         <div class="mt-4 grid gap-3 md:grid-cols-2">
             @foreach ($secondary['items'] as $item)
                 @php $badgeTone = $toneClasses[$item['status']['tone']] ?? $toneClasses['gray']; @endphp
-                <div class="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+                <div class="card-hover flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/70 p-4">
                     <div>
                         <p class="text-sm font-extrabold text-slate-900">{{ $item['title'] }}</p>
                         <p class="mt-1 text-sm font-medium text-slate-500">{{ $item['subtitle'] }}</p>

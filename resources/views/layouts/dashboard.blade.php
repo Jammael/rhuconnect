@@ -188,12 +188,180 @@
                         </div>
 
                         <div class="flex shrink-0 items-center gap-3">
-                            <button class="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm transition hover:text-green-700" type="button" aria-label="Notifications">
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" />
-                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-                                </svg>
-                            </button>
+                            <div
+                                class="relative"
+                                x-data="{
+                                    open: false,
+                                    notifications: [],
+                                    unreadCount: 0,
+                                    csrfToken: document.querySelector('meta[name=csrf-token]').content,
+                                    iconPaths: {
+                                        'user-check': '<path d=&quot;M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2&quot; /><circle cx=&quot;9&quot; cy=&quot;7&quot; r=&quot;4&quot; /><path d=&quot;m16 11 2 2 4-4&quot; />',
+                                        'user-x': '<path d=&quot;M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2&quot; /><circle cx=&quot;9&quot; cy=&quot;7&quot; r=&quot;4&quot; /><path d=&quot;m17 8 5 5&quot; /><path d=&quot;m22 8-5 5&quot; />',
+                                        'user-plus': '<path d=&quot;M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2&quot; /><circle cx=&quot;9&quot; cy=&quot;7&quot; r=&quot;4&quot; /><path d=&quot;M19 8v6&quot; /><path d=&quot;M22 11h-6&quot; />',
+                                        'shield-alert': '<path d=&quot;M20 13c0 5-3.5 7.5-7.7 8.9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.4a1.4 1.4 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z&quot; /><path d=&quot;M12 8v4&quot; /><path d=&quot;M12 16h.01&quot; />',
+                                        bell: '<path d=&quot;M10.3 21a1.9 1.9 0 0 0 3.4 0&quot; /><path d=&quot;M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9&quot; />',
+                                    },
+                                    init() {
+                                        this.fetchNotifications();
+                                        setInterval(() => this.fetchNotifications(), 30000);
+                                    },
+                                    async fetchNotifications() {
+                                        const response = await fetch('{{ route('notifications.index') }}', {
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'X-Background-Poll': 'true',
+                                            },
+                                        });
+
+                                        if (! response.ok) {
+                                            return;
+                                        }
+
+                                        if (response.redirected) {
+                                            window.location.href = response.url;
+
+                                            return;
+                                        }
+
+                                        if (! response.headers.get('content-type')?.includes('application/json')) {
+                                            return;
+                                        }
+
+                                        const data = await response.json();
+                                        this.notifications = data.notifications ?? [];
+                                        this.unreadCount = data.unread_count ?? 0;
+                                    },
+                                    async markAsRead(notification) {
+                                        const wasUnread = ! notification.read_at;
+
+                                        if (wasUnread) {
+                                            notification.read_at = new Date().toISOString();
+                                            this.unreadCount = Math.max(this.unreadCount - 1, 0);
+                                        }
+
+                                        await fetch(`/notifications/${notification.id}/read`, {
+                                            method: 'POST',
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': this.csrfToken,
+                                            },
+                                        });
+
+                                        if (notification.link) {
+                                            window.location.href = notification.link;
+                                        } else {
+                                            this.fetchNotifications();
+                                        }
+                                    },
+                                    async markAllAsRead() {
+                                        this.notifications = this.notifications.map((notification) => ({
+                                            ...notification,
+                                            read_at: notification.read_at ?? new Date().toISOString(),
+                                        }));
+                                        this.unreadCount = 0;
+
+                                        await fetch('{{ route('notifications.read-all') }}', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': this.csrfToken,
+                                            },
+                                        });
+                                    },
+                                    relativeTime(date) {
+                                        const seconds = Math.max(Math.floor((Date.now() - new Date(date).getTime()) / 1000), 0);
+                                        const intervals = [
+                                            ['year', 31536000],
+                                            ['month', 2592000],
+                                            ['day', 86400],
+                                            ['hour', 3600],
+                                            ['minute', 60],
+                                        ];
+
+                                        for (const [unit, value] of intervals) {
+                                            const count = Math.floor(seconds / value);
+
+                                            if (count >= 1) {
+                                                return `${count} ${unit}${count === 1 ? '' : 's'} ago`;
+                                            }
+                                        }
+
+                                        return 'Just now';
+                                    },
+                                    iconFor(notification) {
+                                        return this.iconPaths[notification.icon] ?? this.iconPaths.bell;
+                                    },
+                                }"
+                            >
+                                <button
+                                    class="relative rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm transition hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
+                                    type="button"
+                                    aria-label="Notifications"
+                                    x-on:click="open = ! open"
+                                    x-bind:aria-expanded="open.toString()"
+                                >
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" />
+                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                                    </svg>
+                                    <span x-cloak x-show="unreadCount > 0" class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-white bg-red-500"></span>
+                                </button>
+
+                                <div
+                                    x-cloak
+                                    x-show="open"
+                                    x-transition:enter="transition ease-out duration-150"
+                                    x-transition:enter-start="translate-y-1 opacity-0"
+                                    x-transition:enter-end="translate-y-0 opacity-100"
+                                    x-transition:leave="transition ease-in duration-100"
+                                    x-transition:leave-start="translate-y-0 opacity-100"
+                                    x-transition:leave-end="translate-y-1 opacity-0"
+                                    x-on:click.outside="open = false"
+                                    class="absolute right-0 z-50 mt-2 w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70"
+                                >
+                                    <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3">
+                                        <h2 class="text-sm font-extrabold text-slate-900">Notifications</h2>
+                                        <button
+                                            type="button"
+                                            class="text-xs font-bold text-green-700 transition hover:text-green-900 disabled:cursor-default disabled:text-slate-300"
+                                            x-on:click="markAllAsRead()"
+                                            x-bind:disabled="unreadCount === 0"
+                                        >
+                                            Mark all as read
+                                        </button>
+                                    </div>
+
+                                    <div class="max-h-96 overflow-y-auto p-2">
+                                        <template x-if="notifications.length === 0">
+                                            <div class="px-4 py-8 text-center text-sm font-medium text-slate-500">
+                                                No notifications yet
+                                            </div>
+                                        </template>
+
+                                        <template x-for="notification in notifications" x-bind:key="notification.id">
+                                            <button
+                                                type="button"
+                                                class="flex w-full gap-3 rounded-lg px-3 py-3 text-left transition hover:bg-slate-50"
+                                                x-on:click="markAsRead(notification)"
+                                            >
+                                                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700">
+                                                    <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" x-html="iconFor(notification)"></svg>
+                                                </span>
+                                                <span class="min-w-0 flex-1">
+                                                    <span class="flex items-start justify-between gap-3">
+                                                        <span class="text-sm font-semibold leading-5 text-slate-800" x-text="notification.message"></span>
+                                                        <span x-show="! notification.read_at" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-red-500"></span>
+                                                    </span>
+                                                    <span class="mt-1 block text-xs font-medium text-slate-400" x-text="relativeTime(notification.created_at)"></span>
+                                                </span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
                             <p class="hidden text-right text-sm font-semibold text-slate-500 sm:block">{{ now()->format('F j, Y / l') }}</p>
                         </div>
                     </div>
@@ -209,5 +377,216 @@
                 </main>
             </div>
         </div>
+
+        <div
+            x-data="{
+                toasts: [],
+                addToast(event) {
+                    const toast = {
+                        id: Date.now() + Math.random(),
+                        type: event.detail.type ?? 'success',
+                        message: event.detail.message ?? '',
+                    };
+
+                    this.toasts.push(toast);
+                    setTimeout(() => this.removeToast(toast.id), 4000);
+                },
+                removeToast(id) {
+                    this.toasts = this.toasts.filter((toast) => toast.id !== id);
+                },
+                accentClass(type) {
+                    return {
+                        success: 'border-green-500',
+                        error: 'border-red-500',
+                        warning: 'border-amber-500',
+                    }[type] ?? 'border-green-500';
+                },
+            }"
+            x-init="window.addEventListener('toast', (event) => addToast(event))"
+            class="fixed bottom-4 right-4 z-50 w-[22rem] max-w-[calc(100vw-2rem)] space-y-2"
+            aria-live="polite"
+        >
+            <template x-for="toast in toasts" x-bind:key="toast.id">
+                <div
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="translate-y-2 opacity-0"
+                    x-transition:enter-end="translate-y-0 opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="translate-y-0 opacity-100"
+                    x-transition:leave-end="translate-y-2 opacity-0"
+                    class="rounded-lg border border-l-4 border-slate-200 bg-white px-4 py-3 shadow-lg shadow-slate-200/80"
+                    x-bind:class="accentClass(toast.type)"
+                >
+                    <div class="flex items-start justify-between gap-3">
+                        <p class="text-sm font-semibold leading-5 text-slate-800" x-text="toast.message"></p>
+                        <button type="button" class="shrink-0 text-slate-400 transition hover:text-slate-700" x-on:click="removeToast(toast.id)" aria-label="Dismiss notification">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M18 6 6 18" />
+                                <path d="m6 6 12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div
+            x-data="{
+                visible: false,
+                countdown: 60,
+                warningTimer: null,
+                countdownTimer: null,
+                lastHeartbeatAt: 0,
+                csrfToken: document.querySelector('meta[name=csrf-token]').content,
+                lifetimeSeconds: @js(max((int) config('session.lifetime'), 1) * 60),
+                warningSeconds: 60,
+                init() {
+                    ['mousemove', 'keydown', 'click', 'touchstart'].forEach((eventName) => {
+                        window.addEventListener(eventName, () => this.resetIdleTimer(), { passive: true });
+                    });
+
+                    this.startWarningTimer();
+                },
+                startWarningTimer() {
+                    clearTimeout(this.warningTimer);
+                    this.warningTimer = setTimeout(
+                        () => this.showWarning(),
+                        Math.max((this.lifetimeSeconds - this.warningSeconds) * 1000, 0),
+                    );
+                },
+                resetIdleTimer() {
+                    if (this.visible) {
+                        this.visible = false;
+                        clearInterval(this.countdownTimer);
+                    }
+
+                    this.sendHeartbeat();
+                    this.startWarningTimer();
+                },
+                showWarning() {
+                    this.visible = true;
+                    this.countdown = this.warningSeconds;
+                    clearInterval(this.countdownTimer);
+                    this.countdownTimer = setInterval(() => {
+                        this.countdown -= 1;
+
+                        if (this.countdown <= 0) {
+                            clearInterval(this.countdownTimer);
+                            window.location.href = window.location.href;
+                        }
+                    }, 1000);
+                },
+                async sendHeartbeat() {
+                    if (Date.now() - this.lastHeartbeatAt < 30000) {
+                        return;
+                    }
+
+                    this.lastHeartbeatAt = Date.now();
+
+                    await fetch('{{ route('session.heartbeat') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken,
+                        },
+                    }).then((response) => {
+                        if (response.redirected) {
+                            window.location.href = response.url;
+                        }
+                    });
+                },
+            }"
+            x-cloak
+            x-show="visible"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="translate-y-2 opacity-0"
+            x-transition:enter-end="translate-y-0 opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="translate-y-0 opacity-100"
+            x-transition:leave-end="translate-y-2 opacity-0"
+            class="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl rounded-xl border border-amber-200 bg-white p-4 shadow-xl shadow-slate-200/80 sm:bottom-6"
+            role="alert"
+        >
+            <div class="flex items-start gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M10 2h4" />
+                        <path d="M12 14v-4" />
+                        <path d="M12 22a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
+                    </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-extrabold text-slate-900">You'll be signed out in <span x-text="countdown"></span> seconds due to inactivity.</p>
+                    <p class="mt-1 text-sm font-medium leading-5 text-slate-500">Move your mouse or click anywhere to stay signed in.</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (() => {
+                const closeUrl = @json(route('session.close-beacon'));
+                const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
+                const navigationIntentKey = 'rhu_navigation_intent_until';
+                const graceMs = 2000;
+
+                if (! csrfToken || ! navigator.sendBeacon) {
+                    return;
+                }
+
+                const markNavigationIntent = () => {
+                    sessionStorage.setItem(navigationIntentKey, String(Date.now() + graceMs));
+                };
+
+                const hasNavigationIntent = () => {
+                    return Number(sessionStorage.getItem(navigationIntentKey) || 0) > Date.now();
+                };
+
+                window.addEventListener('DOMContentLoaded', () => {
+                    sessionStorage.removeItem(navigationIntentKey);
+                });
+
+                document.addEventListener('click', (event) => {
+                    const link = event.target.closest?.('a[href]');
+
+                    if (! link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                        return;
+                    }
+
+                    const url = new URL(link.href, window.location.href);
+
+                    if (url.origin === window.location.origin && link.target !== '_blank' && ! link.hasAttribute('download')) {
+                        markNavigationIntent();
+                    }
+                }, true);
+
+                document.addEventListener('submit', (event) => {
+                    const form = event.target;
+                    const action = new URL(form.action || window.location.href, window.location.href);
+
+                    if (action.origin === window.location.origin) {
+                        markNavigationIntent();
+                    }
+                }, true);
+
+                window.addEventListener('pagehide', (event) => {
+                    if (event.persisted) {
+                        return;
+                    }
+
+                    if (hasNavigationIntent()) {
+                        return;
+                    }
+
+                    const body = new URLSearchParams();
+                    body.append('_token', csrfToken);
+
+                    navigator.sendBeacon(
+                        closeUrl,
+                        new Blob([body.toString()], { type: 'application/x-www-form-urlencoded;charset=UTF-8' }),
+                    );
+                });
+            })();
+        </script>
     </body>
 </html>

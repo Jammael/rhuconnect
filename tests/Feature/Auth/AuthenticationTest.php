@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -59,6 +60,9 @@ class AuthenticationTest extends TestCase
 
     public function test_login_is_rate_limited_after_too_many_attempts(): void
     {
+        $administrator = User::factory()->create([
+            'role_id' => Role::firstOrCreate(['name' => 'Administrator'])->id,
+        ]);
         $user = User::factory()->create();
 
         for ($attempt = 0; $attempt < 5; $attempt++) {
@@ -75,12 +79,20 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
         $response->assertSessionHasErrors('email');
+
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_type' => User::class,
+            'notifiable_id' => $administrator->id,
+        ]);
+
+        $this->assertSame(1, $administrator->notifications()->count());
+        $this->assertSame('shield-alert', $administrator->notifications()->first()->data['icon']);
     }
 
     public function test_administrators_are_redirected_to_admin_dashboard(): void
     {
         $user = User::factory()->create([
-            'role_id' => \App\Models\Role::firstOrCreate(['name' => 'Administrator'])->id,
+            'role_id' => Role::firstOrCreate(['name' => 'Administrator'])->id,
         ]);
 
         $response = $this->post('/login', [

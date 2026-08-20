@@ -156,7 +156,8 @@ class AdminUserManagementTest extends TestCase
             ->patch("/admin/users/{$doctor->id}/status", [
                 'account_status' => 'INACTIVE',
             ])
-            ->assertRedirect();
+            ->assertRedirect()
+            ->assertSessionHas('status', 'User account status updated successfully.');
 
         $doctor->refresh();
 
@@ -167,6 +168,31 @@ class AdminUserManagementTest extends TestCase
             'user_id' => $administrator->id,
             'event' => 'admin.user_deactivated',
         ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_type' => User::class,
+            'notifiable_id' => $administrator->id,
+        ]);
+
+        $this
+            ->actingAs($administrator)
+            ->getJson('/notifications')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1)
+            ->assertJsonFragment([
+                'message' => "{$doctor->name}'s account was deactivated.",
+                'icon' => 'user-x',
+            ]);
+
+        $notification = $administrator->notifications()->firstOrFail();
+
+        $this
+            ->actingAs($administrator)
+            ->postJson("/notifications/{$notification->id}/read")
+            ->assertOk()
+            ->assertJsonPath('unread_count', 0);
+
+        $this->assertNotNull($notification->fresh()->read_at);
     }
 
     public function test_administrator_cannot_deactivate_or_demote_themselves(): void

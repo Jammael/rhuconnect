@@ -19,7 +19,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admin.users.update', $managedUser) }}" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
+        <form method="POST" action="{{ route('admin.users.update', $managedUser) }}" class="card-hover rounded-xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
             @method('PUT')
             @include('admin.users._form', ['submitLabel' => 'Save Changes'])
         </form>

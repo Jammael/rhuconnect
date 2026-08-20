@@ -7,7 +7,7 @@
 
     <div class="py-10">
         <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-            <div class="overflow-hidden rounded-lg bg-white shadow-sm">
+            <div class="card-hover overflow-hidden rounded-lg bg-white shadow-sm">
                 <div class="p-6 text-gray-900">
                     <p class="text-lg font-semibold text-green-700">RHUConnect administration access confirmed.</p>
                     <p class="mt-2 text-sm text-gray-600">Manage staff accounts for Doctor, Nurse, Midwife, and Data Encoder roles.</p>

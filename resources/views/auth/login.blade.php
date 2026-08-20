@@ -14,7 +14,7 @@
     </head>
     <body class="font-sans text-gray-900 antialiased">
         <main class="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 to-white px-4 py-8">
-            <section class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-slate-200/80 sm:p-10">
+            <section class="card-hover w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-slate-200/80 sm:p-10">
                 <div class="text-center">
                     <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-green-600 text-white shadow-lg shadow-green-600/20" aria-hidden="true">
                         <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
@@ -33,7 +33,7 @@
 
                 <x-auth-session-status class="mt-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800" :status="session('status')" />
 
-                <form class="mt-8 space-y-5" method="POST" action="{{ route('login') }}" x-data="{ showPassword: false, submitting: false }" x-on:submit="submitting = true">
+                <form class="mt-8 space-y-5" method="POST" action="{{ route('login') }}" x-data="{ showPassword: false, submitting: false }" x-init="window.addEventListener('pageshow', (event) => { if (event.persisted) submitting = false; })" x-on:submit="submitting = true">
                     @csrf
 
                     <div>

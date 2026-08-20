@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\AuditLog;
+use App\Notifications\LoginLockoutDetected;
+use App\Support\AdministratorNotifications;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -82,6 +84,7 @@ class LoginRequest extends FormRequest
         AuditLog::record('auth.login_throttled', $this, metadata: [
             'email_hash' => hash('sha256', Str::lower((string) $this->string('email'))),
         ]);
+        AdministratorNotifications::send(new LoginLockoutDetected((string) $this->string('email'), $this->ip()));
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 

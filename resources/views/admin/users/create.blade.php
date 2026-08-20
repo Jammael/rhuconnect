@@ -13,7 +13,7 @@
 
 @section('content')
     <div class="mx-auto max-w-4xl">
-        <form method="POST" action="{{ route('admin.users.store') }}" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
+        <form method="POST" action="{{ route('admin.users.store') }}" class="card-hover rounded-xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
             @include('admin.users._form', ['submitLabel' => 'Create Account'])
         </form>
     </div>

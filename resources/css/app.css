@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+    /*
+     * Standard hover lift for all card-style containers across RHUConnect.
+     * Apply class="card-hover" to any card, list item, or tile that should
+     * feel interactive. Keep this consistent across every module.
+     */
+    .card-hover {
+        @apply transition-all duration-200 ease-out hover:-translate-y-1.5 hover:shadow-lg;
+    }
+}
+
 [x-cloak] {
     display: none !important;
 }
