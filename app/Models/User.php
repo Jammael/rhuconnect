@@ -19,6 +19,7 @@ class User extends Authenticatable
         'role_id',
         'name',
         'email',
+        'avatar_path',
         'account_status',
         'password',
     ];

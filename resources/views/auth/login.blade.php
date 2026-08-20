@@ -6,6 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>Sign In - {{ config('app.name', 'RHUConnect') }}</title>
+        <x-favicon />
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -16,12 +17,7 @@
         <main class="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 to-white px-4 py-8">
             <section class="card-hover w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-slate-200/80 sm:p-10">
                 <div class="text-center">
-                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-green-600 text-white shadow-lg shadow-green-600/20" aria-hidden="true">
-                        <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 5v14" />
-                            <path d="M5 12h14" />
-                        </svg>
-                    </div>
+                    <x-application-logo class="mx-auto h-14 w-14 rounded-2xl shadow-lg shadow-green-600/20" />
                     <p class="mt-4 text-lg font-extrabold leading-none text-green-700">RHUConnect</p>
                     <p class="mt-1 text-xs font-medium text-gray-500">Sierra Bullones Bohol</p>
                 </div>

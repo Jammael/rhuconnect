@@ -71,6 +71,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ $pageTitle }} - {{ config('app.name', 'RHUConnect') }}</title>
+        <x-favicon />
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -86,12 +87,7 @@
                 x-bind:class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
             >
                 <div class="flex h-20 items-center gap-3 border-b border-slate-100 px-6">
-                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-green-600 text-white shadow-lg shadow-green-600/20" aria-hidden="true">
-                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 5v14" />
-                            <path d="M5 12h14" />
-                        </svg>
-                    </div>
+                    <x-application-logo class="h-11 w-11 rounded-xl shadow-lg shadow-green-600/20" />
                     <div>
                         <p class="text-base font-extrabold leading-tight text-green-700">RHUConnect</p>
                         <p class="text-xs font-semibold text-slate-400">{{ $portalLabel }}</p>
@@ -128,16 +124,22 @@
                 </nav>
 
                 <div class="border-t border-slate-100 p-4">
-                    <div class="relative flex items-center gap-3 rounded-xl bg-slate-50 p-3" x-data="{ menuOpen: false }">
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-extrabold text-green-700">
-                            {{ $initials }}
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate text-sm font-bold text-slate-800">{{ $user->name }}</p>
-                            <p class="truncate text-xs font-medium text-slate-500">{{ $roleLabel }}</p>
-                        </div>
+                    <div class="relative flex items-center gap-2 rounded-xl bg-slate-50 p-2" x-data="{ menuOpen: false }">
+                        <a
+                            href="{{ route('profile.edit') }}"
+                            class="group flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
+                            aria-label="Open profile page"
+                        >
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-extrabold text-green-700 transition group-hover:bg-green-200">
+                                {{ $initials }}
+                            </div>
+                            <div class="min-w-0 flex-1 text-left">
+                                <p class="truncate text-sm font-bold text-slate-800 transition group-hover:text-green-700">{{ $user->name }}</p>
+                                <p class="truncate text-xs font-medium text-slate-500">{{ $roleLabel }}</p>
+                            </div>
+                        </a>
                         <button
-                            class="rounded-lg p-1.5 text-slate-400 transition hover:bg-white hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
+                            class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-white hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
                             type="button"
                             x-on:click="menuOpen = ! menuOpen"
                             aria-label="Open account menu"

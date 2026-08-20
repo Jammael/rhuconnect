@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -12,13 +14,22 @@ class ProfileTest extends TestCase
 
     public function test_profile_page_is_displayed(): void
     {
-        $user = User::factory()->create();
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'avatar_path' => 'avatars/profile-avatar.png',
+        ]);
+        Storage::disk('public')->put($user->avatar_path, 'avatar');
 
         $response = $this
             ->actingAs($user)
             ->get('/profile');
 
         $response->assertOk();
+        $response->assertSee('md:grid-cols-3', false);
+        $response->assertSee('id="avatar-input"', false);
+        $response->assertSee('id="profile-information-form"', false);
+        $response->assertSee('/storage/avatars/profile-avatar.png', false);
     }
 
     public function test_profile_information_can_be_updated(): void
@@ -41,6 +52,38 @@ class ProfileTest extends TestCase
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_profile_avatar_can_be_uploaded_and_replaces_previous_avatar(): void
+    {
+        Storage::fake('public');
+
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=');
+        $oldAvatar = 'avatars/old-avatar.png';
+        Storage::disk('public')->put($oldAvatar, $png);
+
+        $user = User::factory()->create([
+            'avatar_path' => $oldAvatar,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar' => UploadedFile::fake()->createWithContent('profile-avatar.png', $png),
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertNotNull($user->avatar_path);
+        $this->assertNotSame($oldAvatar, $user->avatar_path);
+        Storage::disk('public')->assertMissing($oldAvatar);
+        Storage::disk('public')->assertExists($user->avatar_path);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
