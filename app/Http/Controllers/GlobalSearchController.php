@@ -63,6 +63,8 @@ class GlobalSearchController extends Controller
         'Patient Records'        => 'patients.index',
         'User Management'        => 'admin.users.index',
         'Profile'                => 'profile.edit',
+        'Doctor Availability'    => 'doctor-availability.index',
+        'My Availability'        => 'doctor-availability.index',
     ];
 
     private const RESULT_LIMIT = 5;

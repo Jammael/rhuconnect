@@ -59,6 +59,21 @@ class User extends Authenticatable
         return $this->hasMany(DoctorAvailability::class, 'doctor_id');
     }
 
+    public function availabilityTemplates(): HasMany
+    {
+        return $this->hasMany(DoctorAvailabilityTemplate::class, 'doctor_id');
+    }
+
+    public function availabilityExceptions(): HasMany
+    {
+        return $this->hasMany(DoctorAvailabilityException::class, 'doctor_id');
+    }
+
+    public function getAvailableSlots(string|\Carbon\CarbonInterface $date): array
+    {
+        return app(\App\Services\DoctorAvailabilityService::class)->getAvailableSlots($this, $date);
+    }
+
     public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class, 'doctor_id');

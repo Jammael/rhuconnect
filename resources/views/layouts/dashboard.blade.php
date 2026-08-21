@@ -50,6 +50,7 @@
                 'Dashboard' => route('dashboard'),
                 'Profile' => route('profile.edit'),
                 'Patient Records' => route('patients.index'),
+                'Doctor Availability', 'My Availability' => route('doctor-availability.index'),
                 default => '#',
             };
         }
@@ -67,6 +68,7 @@
                 'Dashboard' => request()->routeIs('dashboard') || request()->routeIs('admin.dashboard'),
                 'Profile' => request()->routeIs('profile.*'),
                 'Patient Records' => request()->routeIs('patients.*'),
+                'Doctor Availability', 'My Availability' => request()->routeIs('doctor-availability.*'),
                 default => false,
             };
         }

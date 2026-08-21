@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DoctorAvailabilityController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
@@ -50,6 +51,13 @@ Route::middleware(['auth', 'idle', 'active'])->group(function () {
     Route::resource('patients', PatientController::class)->except(['destroy'])->withTrashed(['show']);
     Route::patch('/patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
     Route::patch('/patients/{patient}/restore', [PatientController::class, 'restore'])->name('patients.restore');
+
+    Route::get('/doctor-availability', [DoctorAvailabilityController::class, 'index'])->name('doctor-availability.index');
+    Route::get('/doctor-availability/{doctor}/edit', [DoctorAvailabilityController::class, 'edit'])->name('doctor-availability.edit');
+    Route::put('/doctor-availability/{doctor}', [DoctorAvailabilityController::class, 'update'])->name('doctor-availability.update');
+    Route::get('/doctor-availability/{doctor}/exceptions', [DoctorAvailabilityController::class, 'exceptions'])->name('doctor-availability.exceptions');
+    Route::post('/doctor-availability/{doctor}/exceptions', [DoctorAvailabilityController::class, 'storeException'])->name('doctor-availability.exceptions.store');
+    Route::delete('/doctor-availability/{doctor}/exceptions/{exception}', [DoctorAvailabilityController::class, 'destroyException'])->name('doctor-availability.exceptions.destroy');
 });
 
 require __DIR__.'/auth.php';
