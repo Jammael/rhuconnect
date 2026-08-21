@@ -228,6 +228,20 @@
                         </div>
 
                         <div class="flex shrink-0 items-center gap-3">
+                            <button
+                                type="button"
+                                class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 shadow-xs transition hover:border-green-300 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
+                                x-on:click="$dispatch('open-command-palette')"
+                                aria-label="Search"
+                            >
+                                <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.3-4.3" />
+                                </svg>
+                                <span class="hidden sm:inline">Search...</span>
+                                <kbd class="hidden rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 sm:inline">⌘K</kbd>
+                            </button>
+
                             <div
                                 class="relative"
                                 x-data="{
@@ -415,6 +429,348 @@
 
                     @yield('content')
                 </main>
+            </div>
+        </div>
+
+        {{-- Global Command Palette (Cmd+K / Ctrl+K) --}}
+        <div
+            x-data="{
+                isOpen: false,
+                query: '',
+                loading: false,
+                results: { patients: [], users: [], pages: [] },
+                flatResults: [],
+                selectedIndex: 0,
+                debounceTimer: null,
+
+                openPalette() {
+                    this.isOpen = true;
+                    this.query = '';
+                    this.results = { patients: [], users: [], pages: [] };
+                    this.flatResults = [];
+                    this.selectedIndex = 0;
+                    this.loading = false;
+                    this.$nextTick(() => {
+                        this.$refs.paletteInput?.focus();
+                    });
+                },
+
+                closePalette() {
+                    this.isOpen = false;
+                    this.query = '';
+                },
+
+                onInput() {
+                    clearTimeout(this.debounceTimer);
+                    const q = this.query.trim();
+
+                    if (q.length < 2) {
+                        this.results = { patients: [], users: [], pages: [] };
+                        this.flatResults = [];
+                        this.selectedIndex = 0;
+                        this.loading = false;
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.debounceTimer = setTimeout(() => {
+                        this.fetchResults();
+                    }, 200);
+                },
+
+                async fetchResults() {
+                    const q = this.query.trim();
+                    if (q.length < 2) {
+                        this.loading = false;
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/search?q=${encodeURIComponent(q)}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                            },
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.results = {
+                                patients: data.patients ?? [],
+                                users: data.users ?? [],
+                                pages: data.pages ?? [],
+                            };
+                            this.buildFlatResults();
+                        }
+                    } catch (err) {
+                        console.error('Search request failed:', err);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                buildFlatResults() {
+                    const items = [];
+                    (this.results.patients ?? []).forEach((p) => items.push({ ...p, category: 'patient' }));
+                    (this.results.users ?? []).forEach((u) => items.push({ ...u, category: 'user' }));
+                    (this.results.pages ?? []).forEach((pg) => items.push({ ...pg, category: 'page', name: pg.label }));
+                    this.flatResults = items;
+                    this.selectedIndex = 0;
+                },
+
+                selectNext() {
+                    if (this.flatResults.length === 0) return;
+                    this.selectedIndex = (this.selectedIndex + 1) % this.flatResults.length;
+                    this.scrollSelectedIntoView();
+                },
+
+                selectPrev() {
+                    if (this.flatResults.length === 0) return;
+                    this.selectedIndex = (this.selectedIndex - 1 + this.flatResults.length) % this.flatResults.length;
+                    this.scrollSelectedIntoView();
+                },
+
+                scrollSelectedIntoView() {
+                    this.$nextTick(() => {
+                        const el = document.getElementById('search-result-' + this.selectedIndex);
+                        el?.scrollIntoView({ block: 'nearest' });
+                    });
+                },
+
+                navigateSelected() {
+                    if (this.flatResults.length > 0 && this.flatResults[this.selectedIndex]) {
+                        const item = this.flatResults[this.selectedIndex];
+                        if (item.link && item.link !== '#') {
+                            const targetLink = item.link;
+                            this.closePalette();
+                            window.location.href = targetLink;
+                        }
+                    }
+                },
+            }"
+            x-init="
+                window.addEventListener('keydown', (e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+                        e.preventDefault();
+                        if (isOpen) {
+                            closePalette();
+                        } else {
+                            openPalette();
+                        }
+                    }
+                });
+                window.addEventListener('open-command-palette', () => openPalette());
+            "
+            x-cloak
+            x-show="isOpen"
+            class="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 md:p-20"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Command palette search"
+        >
+            <div
+                x-show="isOpen"
+                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-100"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+                x-on:click="closePalette()"
+                aria-hidden="true"
+            ></div>
+
+            <div
+                x-show="isOpen"
+                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-100"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="relative mx-auto max-w-xl transform overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all"
+                x-on:click.stop
+                x-on:keydown.escape.window="closePalette()"
+                x-on:keydown.down.prevent="selectNext()"
+                x-on:keydown.up.prevent="selectPrev()"
+                x-on:keydown.enter.prevent="navigateSelected()"
+            >
+                <div class="relative flex items-center border-b border-slate-100 px-4 py-3.5">
+                    <svg class="mr-3 h-5 w-5 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+
+                    <input
+                        x-ref="paletteInput"
+                        x-model="query"
+                        x-on:input="onInput()"
+                        type="text"
+                        class="w-full border-0 bg-transparent p-0 text-base font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0"
+                        placeholder="Type to search patients, staff, or pages..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    />
+
+                    <div class="flex items-center gap-2">
+                        <template x-if="loading">
+                            <svg class="h-4 w-4 animate-spin text-green-600" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </template>
+                        <button
+                            type="button"
+                            class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"
+                            x-on:click="closePalette()"
+                        >
+                            ESC
+                        </button>
+                    </div>
+                </div>
+
+                <div class="max-h-96 overflow-y-auto p-2">
+                    <template x-if="query.trim().length < 2">
+                        <div class="px-6 py-10 text-center">
+                            <div class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.3-4.3" />
+                                </svg>
+                            </div>
+                            <p class="mt-3 text-sm font-semibold text-slate-700">Type to search patients, staff, or pages</p>
+                            <p class="mt-1 text-xs text-slate-400">Enter at least 2 characters to see results</p>
+                        </div>
+                    </template>
+
+                    <template x-if="query.trim().length >= 2 && !loading && flatResults.length === 0">
+                        <div class="px-6 py-10 text-center">
+                            <p class="text-sm font-semibold text-slate-700">No results found</p>
+                            <p class="mt-1 text-xs text-slate-400">No matching records found for "<span class="font-medium text-slate-600" x-text="query"></span>"</p>
+                        </div>
+                    </template>
+
+                    <template x-if="query.trim().length >= 2 && flatResults.length > 0">
+                        <div class="space-y-3">
+                            <template x-if="results.patients && results.patients.length > 0">
+                                <div>
+                                    <p class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Patients</p>
+                                    <div class="mt-1 space-y-1">
+                                        <template x-for="(patient, pIdx) in results.patients" :key="'p-' + patient.id">
+                                            <a
+                                                :id="'search-result-' + pIdx"
+                                                :href="patient.link"
+                                                class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition"
+                                                :class="selectedIndex === pIdx ? 'bg-green-50 text-green-900' : 'text-slate-700 hover:bg-slate-50'"
+                                                x-on:mouseenter="selectedIndex = pIdx"
+                                                x-on:click="closePalette()"
+                                            >
+                                                <div class="flex min-w-0 items-center gap-3">
+                                                    <span
+                                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
+                                                        :class="selectedIndex === pIdx ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'"
+                                                    >
+                                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                            <path d="M14 2v6h6" />
+                                                            <path d="M8 13h8" />
+                                                            <path d="M8 17h6" />
+                                                        </svg>
+                                                    </span>
+                                                    <div class="min-w-0">
+                                                        <p class="truncate text-sm font-semibold" x-text="patient.name"></p>
+                                                        <p class="truncate text-xs text-slate-400" x-text="patient.meta"></p>
+                                                    </div>
+                                                </div>
+                                                <span x-show="selectedIndex === pIdx" class="text-xs font-bold text-green-700">Jump →</span>
+                                            </a>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template x-if="results.users && results.users.length > 0">
+                                <div>
+                                    <p class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Staff</p>
+                                    <div class="mt-1 space-y-1">
+                                        <template x-for="(user, uIdx) in results.users" :key="'u-' + user.id">
+                                            <a
+                                                :id="'search-result-' + (results.patients.length + uIdx)"
+                                                :href="user.link"
+                                                class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition"
+                                                :class="selectedIndex === (results.patients.length + uIdx) ? 'bg-green-50 text-green-900' : 'text-slate-700 hover:bg-slate-50'"
+                                                x-on:mouseenter="selectedIndex = results.patients.length + uIdx"
+                                                x-on:click="closePalette()"
+                                            >
+                                                <div class="flex min-w-0 items-center gap-3">
+                                                    <span
+                                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
+                                                        :class="selectedIndex === (results.patients.length + uIdx) ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'"
+                                                    >
+                                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                                            <circle cx="9" cy="7" r="4" />
+                                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                                        </svg>
+                                                    </span>
+                                                    <div class="min-w-0">
+                                                        <p class="truncate text-sm font-semibold" x-text="user.name"></p>
+                                                        <p class="truncate text-xs text-slate-400" x-text="user.meta"></p>
+                                                    </div>
+                                                </div>
+                                                <span x-show="selectedIndex === (results.patients.length + uIdx)" class="text-xs font-bold text-green-700">Jump →</span>
+                                            </a>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template x-if="results.pages && results.pages.length > 0">
+                                <div>
+                                    <p class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Pages</p>
+                                    <div class="mt-1 space-y-1">
+                                        <template x-for="(page, pgIdx) in results.pages" :key="'pg-' + page.label">
+                                            <a
+                                                :id="'search-result-' + (results.patients.length + results.users.length + pgIdx)"
+                                                :href="page.link"
+                                                class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition"
+                                                :class="selectedIndex === (results.patients.length + results.users.length + pgIdx) ? 'bg-green-50 text-green-900' : 'text-slate-700 hover:bg-slate-50'"
+                                                x-on:mouseenter="selectedIndex = results.patients.length + results.users.length + pgIdx"
+                                                x-on:click="closePalette()"
+                                            >
+                                                <div class="flex min-w-0 items-center gap-3">
+                                                    <span
+                                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
+                                                        :class="selectedIndex === (results.patients.length + results.users.length + pgIdx) ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'"
+                                                    >
+                                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                            <path d="M3 10.5 12 3l9 7.5" />
+                                                            <path d="M5 9.5V21h14V9.5" />
+                                                        </svg>
+                                                    </span>
+                                                    <div class="min-w-0">
+                                                        <p class="truncate text-sm font-semibold" x-text="page.label"></p>
+                                                    </div>
+                                                </div>
+                                                <span x-show="selectedIndex === (results.patients.length + results.users.length + pgIdx)" class="text-xs font-bold text-green-700">Jump →</span>
+                                            </a>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-100 bg-slate-50/80 px-4 py-2.5 text-xs font-medium text-slate-400">
+                    <div class="flex items-center gap-3">
+                        <span><kbd class="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-500 shadow-2xs">↑</kbd> <kbd class="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-500 shadow-2xs">↓</kbd> navigate</span>
+                        <span><kbd class="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-500 shadow-2xs">↵</kbd> select</span>
+                        <span><kbd class="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-500 shadow-2xs">esc</kbd> close</span>
+                    </div>
+                    <span class="hidden sm:inline text-[11px] text-slate-400">RHUConnect Search</span>
+                </div>
             </div>
         </div>
 

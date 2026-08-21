@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
@@ -39,6 +40,8 @@ Route::middleware(['auth', 'idle', 'active'])->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::post('/session/heartbeat', fn () => response()->noContent())->name('session.heartbeat');
+
+    Route::get('/search', [GlobalSearchController::class, 'index'])->name('search');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
