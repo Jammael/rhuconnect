@@ -10,25 +10,47 @@
     ];
 @endphp
 
-<div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+{{--
+    SKELETON DEMO — stat card loading state.
+    `loaded` is set to true after a 400 ms artificial delay so the skeleton
+    placeholder is visible during development / review. When these stat cards
+    are later converted to fetch data asynchronously via Alpine/JS, replace
+    `setTimeout(() => loaded = true, 400)` with the callback that fires once
+    your fetch() resolves — no other markup changes are needed.
+--}}
+<div
+    class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4"
+    x-data="{ loaded: false }"
+    x-init="setTimeout(() => loaded = true, 400)"
+>
+    {{-- Skeleton placeholders — shown for ~400 ms on page load --}}
+    @foreach ($stats as $_)
+        <template x-if="! loaded">
+            <x-skeleton-card />
+        </template>
+    @endforeach
+
+    {{-- Real stat cards — revealed once `loaded` flips to true --}}
     @foreach ($stats as $stat)
         @php $tone = $toneClasses[$stat['tone']] ?? $toneClasses['green']; @endphp
-        <article class="card-hover rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
-            <div class="flex items-start justify-between gap-4">
-                <p class="text-sm font-bold text-slate-500">{{ $stat['label'] }}</p>
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $tone['icon'] }}">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M4 19V5" />
-                        <path d="M8 17V9" />
-                        <path d="M12 17V7" />
-                        <path d="M16 17v-5" />
-                        <path d="M20 17V4" />
-                    </svg>
-                </span>
-            </div>
-            <p class="mt-5 text-3xl font-extrabold tracking-normal text-slate-900">{{ $stat['value'] }}</p>
-            <p class="mt-2 text-sm font-medium text-slate-500">{{ $stat['caption'] }}</p>
-        </article>
+        <template x-if="loaded">
+            <article class="card-hover rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
+                <div class="flex items-start justify-between gap-4">
+                    <p class="text-sm font-bold text-slate-500">{{ $stat['label'] }}</p>
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $tone['icon'] }}">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 19V5" />
+                            <path d="M8 17V9" />
+                            <path d="M12 17V7" />
+                            <path d="M16 17v-5" />
+                            <path d="M20 17V4" />
+                        </svg>
+                    </span>
+                </div>
+                <p class="mt-5 text-3xl font-extrabold tracking-normal text-slate-900">{{ $stat['value'] }}</p>
+                <p class="mt-2 text-sm font-medium text-slate-500">{{ $stat['caption'] }}</p>
+            </article>
+        </template>
     @endforeach
 </div>
 

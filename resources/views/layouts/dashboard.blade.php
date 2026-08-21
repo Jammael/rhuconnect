@@ -91,6 +91,24 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
+        {{-- Top navigation progress bar — driven by the navigation-progress script below --}}
+        <div
+            id="rhu-progress-bar"
+            aria-hidden="true"
+            style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 9999;
+                height: 3px;
+                width: 0%;
+                background-color: #15803d;
+                transition: width 0.25s ease, opacity 0.4s ease 0.2s;
+                opacity: 0;
+                pointer-events: none;
+            "
+        ></div>
+
         <div class="min-h-screen bg-slate-50 text-slate-900 lg:flex" x-data="{ sidebarOpen: false }">
             <div x-cloak x-show="sidebarOpen" class="fixed inset-0 z-40 bg-slate-900/40 lg:hidden" x-on:click="sidebarOpen = false"></div>
 
@@ -608,6 +626,120 @@
                         new Blob([body.toString()], { type: 'application/x-www-form-urlencoded;charset=UTF-8' }),
                     );
                 });
+            })();
+        </script>
+
+        <script>
+            /**
+             * Navigation Progress Bar
+             * ───────────────────────
+             * Shows a slim green top-bar animation during full-page navigations.
+             *
+             * How it works:
+             *  1. On same-origin link click or form submit → start() animates the
+             *     bar to ~85% width (deliberately stops short to suggest "in flight").
+             *  2. On DOMContentLoaded of the *new* page → finish() rushes the bar to
+             *     100% and then fades it out. Because a full navigation replaces the
+             *     entire document, this script re-runs from scratch on each page, so
+             *     no cross-navigation state needs to be persisted.
+             *
+             * This block is intentionally separate from the tab-close beacon script
+             * above — do not merge them. The beacon script's markNavigationIntent()
+             * and this progress bar share the same click/submit trigger conditions
+             * but serve different purposes.
+             */
+            (() => {
+                const bar = document.getElementById('rhu-progress-bar');
+
+                if (! bar) {
+                    return;
+                }
+
+                let startTimer = null;
+
+                const start = () => {
+                    // Guard: only start once per navigation
+                    if (startTimer !== null) {
+                        return;
+                    }
+
+                    bar.style.transition = 'none';
+                    bar.style.width = '0%';
+                    bar.style.opacity = '1';
+
+                    // Animate to ~85 % in a two-step ramp to look natural
+                    requestAnimationFrame(() => {
+                        bar.style.transition = 'width 0.6s ease-out, opacity 0.4s ease';
+                        bar.style.width = '50%';
+
+                        startTimer = setTimeout(() => {
+                            bar.style.transition = 'width 2.5s ease-out, opacity 0.4s ease';
+                            bar.style.width = '85%';
+                        }, 600);
+                    });
+                };
+
+                const finish = () => {
+                    clearTimeout(startTimer);
+                    startTimer = null;
+
+                    bar.style.transition = 'width 0.15s ease-in, opacity 0.35s ease 0.15s';
+                    bar.style.width = '100%';
+                    bar.style.opacity = '0';
+
+                    // Reset width after fade so it's clean if bfcache restores the page
+                    setTimeout(() => {
+                        bar.style.transition = 'none';
+                        bar.style.width = '0%';
+                    }, 600);
+                };
+
+                // Trigger on same-origin link clicks (mirrors beacon script conditions)
+                document.addEventListener('click', (event) => {
+                    const link = event.target.closest?.('a[href]');
+
+                    if (
+                        ! link ||
+                        event.defaultPrevented ||
+                        event.button !== 0 ||
+                        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+                    ) {
+                        return;
+                    }
+
+                    let url;
+                    try {
+                        url = new URL(link.href, window.location.href);
+                    } catch {
+                        return;
+                    }
+
+                    if (
+                        url.origin === window.location.origin &&
+                        link.target !== '_blank' &&
+                        ! link.hasAttribute('download')
+                    ) {
+                        start();
+                    }
+                }, true);
+
+                // Trigger on same-origin form submissions
+                document.addEventListener('submit', (event) => {
+                    const form = event.target;
+                    let action;
+                    try {
+                        action = new URL(form.action || window.location.href, window.location.href);
+                    } catch {
+                        return;
+                    }
+
+                    if (action.origin === window.location.origin) {
+                        start();
+                    }
+                }, true);
+
+                // Complete the bar once the new page is ready
+                window.addEventListener('DOMContentLoaded', finish);
             })();
         </script>
     </body>
