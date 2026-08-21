@@ -23,6 +23,15 @@ class Patient extends Model
         'barangay',
         'contact_number',
         'email',
+        'philhealth_id',
+        'blood_type',
+        'guardian_name',
+        'guardian_contact',
+        'known_allergies',
+        'existing_conditions',
+        'current_medications',
+        'emergency_contact_name',
+        'emergency_contact_number',
     ];
 
     protected function casts(): array
@@ -35,6 +44,18 @@ class Patient extends Model
     public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class);
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return collect([$this->first_name, $this->middle_name, $this->last_name])
+            ->filter()
+            ->implode(' ');
+    }
+
+    public function getAgeAttribute(): ?int
+    {
+        return $this->birthdate?->age;
     }
 
     public function smsNotifications(): HasMany

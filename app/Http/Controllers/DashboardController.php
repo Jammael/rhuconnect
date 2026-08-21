@@ -224,11 +224,11 @@ class DashboardController extends Controller
     {
         return match ($role) {
             'Administrator' => [
-                'MAIN MENU' => ['Dashboard', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
+                'MAIN MENU' => ['Dashboard', 'Patient Records', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
                 'SYSTEM' => [['label' => 'User Management', 'route' => 'admin.users.index', 'active' => 'admin.users.*']],
             ],
             'Doctor' => [
-                'MAIN MENU' => ['Dashboard', 'My Appointments', 'My Availability', 'Patient Visit History', 'Profile'],
+                'MAIN MENU' => ['Dashboard', 'Patient Records', 'My Appointments', 'My Availability', 'Patient Visit History', 'Profile'],
             ],
             'Nurse' => [
                 'MAIN MENU' => ['Dashboard', 'Patient Queue', 'Patient Records', 'Vitals/Triage', 'Profile'],

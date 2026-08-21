@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SessionCloseController;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,10 @@ Route::middleware(['auth', 'idle', 'active'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::resource('patients', PatientController::class)->except(['destroy'])->withTrashed(['show']);
+    Route::patch('/patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
+    Route::patch('/patients/{patient}/restore', [PatientController::class, 'restore'])->name('patients.restore');
 });
 
 require __DIR__.'/auth.php';

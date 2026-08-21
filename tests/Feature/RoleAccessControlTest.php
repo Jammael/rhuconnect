@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class RoleAccessControlTest extends TestCase
@@ -112,6 +113,23 @@ class RoleAccessControlTest extends TestCase
             ->actingAs($this->userWithRole('Administrator'))
             ->get('/dashboard')
             ->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_dashboard_sidebar_uses_uploaded_profile_picture_when_available(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->userWithRole('Doctor', [
+            'avatar_path' => 'avatars/sidebar-avatar.jpg',
+        ]);
+        Storage::disk('public')->put($user->avatar_path, 'avatar');
+
+        $this
+            ->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('/storage/avatars/sidebar-avatar.jpg', false)
+            ->assertSee('Profile picture for '.$user->name, false);
     }
 
     private function userWithRole(string $roleName, array $attributes = []): User

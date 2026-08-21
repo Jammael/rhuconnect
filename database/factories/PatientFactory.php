@@ -40,6 +40,15 @@ class PatientFactory extends Factory
             ]),
             'contact_number' => '09' . fake()->numerify('#########'),
             'email' => fake()->optional()->safeEmail(),
+            'philhealth_id' => fake()->optional()->numerify('##-#########-#'),
+            'blood_type' => fake()->optional()->randomElement(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']),
+            'guardian_name' => fake()->optional()->name(),
+            'guardian_contact' => fake()->optional()->numerify('09#########'),
+            'known_allergies' => fake()->optional()->sentence(),
+            'existing_conditions' => fake()->optional()->sentence(),
+            'current_medications' => fake()->optional()->sentence(),
+            'emergency_contact_name' => fake()->name(),
+            'emergency_contact_number' => '09' . fake()->numerify('#########'),
         ];
     }
 }

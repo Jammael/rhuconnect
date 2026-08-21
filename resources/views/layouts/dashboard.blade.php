@@ -15,6 +15,10 @@
         ->map(fn ($part) => mb_substr($part, 0, 1))
         ->implode('');
 
+    $avatarUrl = $user?->avatar_path && Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar_path)
+        ? asset('storage/' . $user->avatar_path)
+        : null;
+
     $hour = now()->hour;
     $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
@@ -42,7 +46,12 @@
 
     $navHref = function ($item) {
         if (is_string($item)) {
-            return $item === 'Dashboard' ? route('dashboard') : ($item === 'Profile' ? route('profile.edit') : '#');
+            return match ($item) {
+                'Dashboard' => route('dashboard'),
+                'Profile' => route('profile.edit'),
+                'Patient Records' => route('patients.index'),
+                default => '#',
+            };
         }
 
         return isset($item['route']) && Route::has($item['route']) ? route($item['route']) : '#';
@@ -54,9 +63,12 @@
 
     $navActive = function ($item) {
         if (is_string($item)) {
-            return $item === 'Dashboard'
-                ? request()->routeIs('dashboard') || request()->routeIs('admin.dashboard')
-                : ($item === 'Profile' && request()->routeIs('profile.*'));
+            return match ($item) {
+                'Dashboard' => request()->routeIs('dashboard') || request()->routeIs('admin.dashboard'),
+                'Profile' => request()->routeIs('profile.*'),
+                'Patient Records' => request()->routeIs('patients.*'),
+                default => false,
+            };
         }
 
         return isset($item['active']) ? request()->routeIs($item['active']) : false;
@@ -130,9 +142,17 @@
                             class="group flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
                             aria-label="Open profile page"
                         >
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-extrabold text-green-700 transition group-hover:bg-green-200">
-                                {{ $initials }}
-                            </div>
+                            @if ($avatarUrl)
+                                <img
+                                    src="{{ $avatarUrl }}"
+                                    alt="{{ __('Profile picture for :name', ['name' => $user->name]) }}"
+                                    class="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-green-100 transition group-hover:ring-green-200"
+                                >
+                            @else
+                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-extrabold text-green-700 transition group-hover:bg-green-200">
+                                    {{ $initials }}
+                                </div>
+                            @endif
                             <div class="min-w-0 flex-1 text-left">
                                 <p class="truncate text-sm font-bold text-slate-800 transition group-hover:text-green-700">{{ $user->name }}</p>
                                 <p class="truncate text-xs font-medium text-slate-500">{{ $roleLabel }}</p>

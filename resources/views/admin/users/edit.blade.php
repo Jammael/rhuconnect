@@ -5,7 +5,7 @@
     'portalLabel' => 'Admin Portal',
     'roleLabel' => 'Administrator',
     'navGroups' => [
-        'MAIN MENU' => ['Dashboard', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
+        'MAIN MENU' => ['Dashboard', 'Patient Records', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
         'SYSTEM' => [['label' => 'User Management', 'route' => 'admin.users.index', 'active' => 'admin.users.*']],
     ],
     'user' => auth()->user(),

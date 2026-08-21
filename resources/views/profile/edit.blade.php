@@ -64,7 +64,6 @@
                 </div>
 
                 <x-input-error class="mt-4 text-left" :messages="$errors->get('avatar')" />
-                <p class="mt-4 text-xs leading-5 text-slate-500">{{ __('Upload a JPG or PNG profile picture up to 2 MB. Select an image, then save your profile information.') }}</p>
             </aside>
 
             <div class="space-y-6 md:col-span-2">
