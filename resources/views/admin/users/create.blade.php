@@ -2,6 +2,11 @@
     'pageTitle' => 'Create User',
     'pageSubtitle' => 'Add a staff account and assign an RHUConnect role.',
     'context' => 'Create a staff account with the correct role and account status.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'User Management', 'link' => route('admin.users.index')],
+        ['label' => 'Create User'],
+    ],
     'portalLabel' => 'Admin Portal',
     'roleLabel' => 'Administrator',
     'navGroups' => [

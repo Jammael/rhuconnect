@@ -17,6 +17,11 @@
     'pageTitle' => 'Create Patient Record',
     'pageSubtitle' => 'Manage RHUConnect patient information.',
     'context' => 'Capture demographic, contact, guardian, and clinical intake details.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'Patient Records', 'link' => route('patients.index')],
+        ['label' => 'Create Patient'],
+    ],
     'portalLabel' => $roleLabel === 'Administrator' ? 'Admin Portal' : $roleLabel.' Portal',
     'roleLabel' => $roleLabel,
     'navGroups' => $navGroups,

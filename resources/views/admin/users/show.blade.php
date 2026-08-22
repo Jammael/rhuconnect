@@ -2,6 +2,11 @@
     'pageTitle' => 'User Details',
     'pageSubtitle' => 'Review staff account information.',
     'context' => 'Check account identity, assigned role, status, and audit-friendly timestamps.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'User Management', 'link' => route('admin.users.index')],
+        ['label' => $managedUser->name],
+    ],
     'portalLabel' => 'Admin Portal',
     'roleLabel' => 'Administrator',
     'navGroups' => [

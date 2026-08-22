@@ -17,6 +17,11 @@
     'pageTitle' => 'Edit Patient Record',
     'pageSubtitle' => 'Manage RHUConnect patient information.',
     'context' => 'Keep demographic, contact, guardian, and clinical intake details current.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'Patient Records', 'link' => route('patients.index')],
+        ['label' => $patient->full_name],
+    ],
     'portalLabel' => $roleLabel === 'Administrator' ? 'Admin Portal' : $roleLabel.' Portal',
     'roleLabel' => $roleLabel,
     'navGroups' => $navGroups,

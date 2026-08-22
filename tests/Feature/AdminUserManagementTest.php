@@ -225,6 +225,56 @@ class AdminUserManagementTest extends TestCase
         $this->assertSame('ACTIVE', $administrator->account_status);
     }
 
+    public function test_bulk_status_update_excludes_current_administrator_and_updates_selected_users(): void
+    {
+        $administrator = $this->userWithRole('Administrator');
+        $doctor = $this->userWithRole('Doctor');
+        $nurse = $this->userWithRole('Nurse');
+
+        $response = $this
+            ->actingAs($administrator)
+            ->patchJson('/admin/users/bulk-status', [
+                'user_ids' => [$administrator->id, $doctor->id, $nurse->id],
+                'account_status' => 'INACTIVE',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('updated_count', 2)
+            ->assertJsonPath('self_excluded', true);
+
+        $administrator->refresh();
+        $doctor->refresh();
+        $nurse->refresh();
+
+        $this->assertSame('ACTIVE', $administrator->account_status);
+        $this->assertSame('INACTIVE', $doctor->account_status);
+        $this->assertSame('INACTIVE', $nurse->account_status);
+        $this->assertSame(2, $administrator->notifications()->count());
+
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $administrator->id,
+            'event' => 'admin.user_deactivated',
+        ]);
+    }
+
+    public function test_non_administrator_cannot_bulk_update_user_statuses(): void
+    {
+        $doctor = $this->userWithRole('Doctor');
+        $nurse = $this->userWithRole('Nurse');
+
+        $this
+            ->actingAs($doctor)
+            ->patchJson('/admin/users/bulk-status', [
+                'user_ids' => [$nurse->id],
+                'account_status' => 'INACTIVE',
+            ])
+            ->assertForbidden();
+
+        $nurse->refresh();
+        $this->assertSame('ACTIVE', $nurse->account_status);
+    }
+
     public function test_inactive_user_cannot_login(): void
     {
         $doctor = $this->userWithRole('Doctor', [

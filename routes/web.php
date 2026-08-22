@@ -31,6 +31,8 @@ Route::middleware(['auth', 'idle', 'verified', 'active', 'role:Administrator'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+        Route::patch('users/bulk-status', [UserManagementController::class, 'bulkUpdateStatus'])
+            ->name('users.bulk-status');
         Route::resource('users', UserManagementController::class)->except(['destroy']);
         Route::patch('users/{user}/status', [UserManagementController::class, 'updateStatus'])
             ->name('users.status');

@@ -28,14 +28,13 @@
             </p>
 
             <div class="mt-6">
-                <x-input-label for="password" value="{{ __('Password') }}" class="sr-only" />
-
-                <x-text-input
-                    id="password"
+                <x-password-input
+                    id="delete_user_password"
                     name="password"
-                    type="password"
-                    class="mt-1 block w-3/4"
-                    placeholder="{{ __('Password') }}"
+                    :label="__('Password')"
+                    placeholder="{{ __('Enter your password') }}"
+                    autocomplete="current-password"
+                    :showStrengthMeter="false"
                 />
 
                 <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2" />

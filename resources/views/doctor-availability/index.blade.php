@@ -13,6 +13,10 @@
     'pageTitle' => 'Doctor Availability',
     'pageSubtitle' => 'Configure recurring schedules and date exceptions for RHU doctors.',
     'context' => 'Manage doctor shift templates, appointment slot durations, and date-specific overrides for appointments.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'Doctor Availability'],
+    ],
     'portalLabel' => 'Admin Portal',
     'roleLabel' => $roleLabel,
     'navGroups' => $navGroups,
@@ -111,4 +115,3 @@
         </div>
     </div>
 @endsection
-

@@ -19,6 +19,11 @@
     'pageTitle' => $pageTitle,
     'pageSubtitle' => 'Manage leaves, holidays, and specific date schedule overrides.',
     'context' => 'Exceptions override the normal weekly recurring schedule for specific calendar dates.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'Doctor Availability', 'link' => route('doctor-availability.index')],
+        ['label' => $pageTitle],
+    ],
     'portalLabel' => $isAdmin ? 'Admin Portal' : 'Doctor Portal',
     'roleLabel' => $roleLabel,
     'navGroups' => $navGroups,
@@ -83,14 +88,15 @@
                     {{-- Target Date --}}
                     <div>
                         <label for="date" class="block text-xs font-bold uppercase tracking-wide text-slate-500">Date</label>
-                        <input
-                            type="date"
-                            id="date"
-                            name="date"
-                            value="{{ old('date', now()->format('Y-m-d')) }}"
-                            required
-                            class="mt-1 w-full rounded-lg border-slate-300 text-sm font-semibold text-slate-800 shadow-xs focus:border-green-600 focus:ring-green-600"
-                        />
+                        <div class="mt-1">
+                            <x-date-picker
+                                name="date"
+                                id="date"
+                                :value="old('date', now()->format('Y-m-d'))"
+                                :min="now()->format('Y-m-d')"
+                                required
+                            />
+                        </div>
                         @error('date')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
@@ -136,26 +142,32 @@
                     <div class="mt-3 flex flex-wrap items-center gap-4">
                         <div class="flex items-center gap-2">
                             <label for="start_time" class="text-xs font-bold text-slate-600">Start Time</label>
-                            <input
-                                type="time"
-                                id="start_time"
-                                name="start_time"
-                                value="{{ old('start_time', '08:00') }}"
-                                class="rounded-lg border-slate-300 bg-white text-sm font-semibold text-slate-800 shadow-xs focus:border-green-600 focus:ring-green-600"
-                            />
+                            <div class="relative">
+                                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2" /></svg>
+                                <input
+                                    type="time"
+                                    id="start_time"
+                                    name="start_time"
+                                    value="{{ old('start_time', '08:00') }}"
+                                    class="h-10 rounded-lg border-slate-300 bg-white pl-9 text-sm font-semibold text-slate-800 shadow-xs transition-colors duration-150 hover:border-green-300 focus:border-green-600 focus:ring-green-600"
+                                />
+                            </div>
                         </div>
 
                         <span class="text-slate-400">—</span>
 
                         <div class="flex items-center gap-2">
                             <label for="end_time" class="text-xs font-bold text-slate-600">End Time</label>
-                            <input
-                                type="time"
-                                id="end_time"
-                                name="end_time"
-                                value="{{ old('end_time', '12:00') }}"
-                                class="rounded-lg border-slate-300 bg-white text-sm font-semibold text-slate-800 shadow-xs focus:border-green-600 focus:ring-green-600"
-                            />
+                            <div class="relative">
+                                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2" /></svg>
+                                <input
+                                    type="time"
+                                    id="end_time"
+                                    name="end_time"
+                                    value="{{ old('end_time', '12:00') }}"
+                                    class="h-10 rounded-lg border-slate-300 bg-white pl-9 text-sm font-semibold text-slate-800 shadow-xs transition-colors duration-150 hover:border-green-300 focus:border-green-600 focus:ring-green-600"
+                                />
+                            </div>
                         </div>
                     </div>
                     @error('start_time')
@@ -255,4 +267,3 @@
         </div>
     </div>
 @endsection
-

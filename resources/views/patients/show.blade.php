@@ -19,6 +19,11 @@
     'pageTitle' => 'Patient Details',
     'pageSubtitle' => 'Manage RHUConnect patient information.',
     'context' => 'Review demographic, contact, guardian, and clinical intake details.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'Patient Records', 'link' => route('patients.index')],
+        ['label' => $patient->full_name],
+    ],
     'portalLabel' => $roleLabel === 'Administrator' ? 'Admin Portal' : $roleLabel.' Portal',
     'roleLabel' => $roleLabel,
     'navGroups' => $navGroups,

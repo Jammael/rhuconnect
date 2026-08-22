@@ -11,7 +11,9 @@ use App\Notifications\UserAccountActivated;
 use App\Notifications\UserAccountDeactivated;
 use App\Support\AdministratorNotifications;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -171,15 +173,59 @@ class UserManagementController extends Controller
             'account_status' => ['required', Rule::in(self::ACCOUNT_STATUSES)],
         ]);
 
-        if ($request->user()->is($user) && $validated['account_status'] !== 'ACTIVE') {
+        if ($this->isCurrentAdministrator($request, $user) && $validated['account_status'] !== 'ACTIVE') {
             return back()->withErrors([
                 'account_status' => 'You cannot deactivate your own administrator account.',
             ]);
         }
 
+        $this->applyAccountStatus($request, $user, $validated['account_status']);
+
+        return back()->with('status', 'User account status updated successfully.');
+    }
+
+    public function bulkUpdateStatus(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'user_ids' => ['required', 'array', 'min:1'],
+            'user_ids.*' => ['integer', 'distinct', Rule::exists('users', 'id')],
+            'account_status' => ['required', Rule::in(self::ACCOUNT_STATUSES)],
+        ]);
+
+        $selectedUserIds = collect($validated['user_ids'])
+            ->reject(fn (int $userId) => $this->isCurrentAdministrator($request, User::find($userId)))
+            ->values()
+            ->all();
+
+        $selfExcluded = count($selectedUserIds) !== count($validated['user_ids']);
+        $users = User::query()
+            ->whereIn('id', $selectedUserIds)
+            ->where('account_status', '!=', $validated['account_status'])
+            ->get();
+
+        DB::transaction(function () use ($request, $users, $validated): void {
+            $users->each(fn (User $user) => $this->applyAccountStatus($request, $user, $validated['account_status']));
+        });
+
+        $updatedCount = $users->count();
+        $message = "{$updatedCount} user account".($updatedCount === 1 ? '' : 's').' updated.';
+
+        if ($selfExcluded) {
+            $message .= ' Your own account was excluded.';
+        }
+
+        return response()->json([
+            'updated_count' => $updatedCount,
+            'self_excluded' => $selfExcluded,
+            'message' => $message,
+        ]);
+    }
+
+    private function applyAccountStatus(Request $request, User $user, string $accountStatus): void
+    {
         $originalStatus = $user->account_status;
         $user->forceFill([
-            'account_status' => $validated['account_status'],
+            'account_status' => $accountStatus,
         ])->save();
 
         AuditLog::record(
@@ -198,8 +244,11 @@ class UserManagementController extends Controller
                 ? new UserAccountActivated($user)
                 : new UserAccountDeactivated($user)
         );
+    }
 
-        return back()->with('status', 'User account status updated successfully.');
+    private function isCurrentAdministrator(Request $request, ?User $user): bool
+    {
+        return $user instanceof User && $request->user()->is($user);
     }
 
     private function manageableRoles()

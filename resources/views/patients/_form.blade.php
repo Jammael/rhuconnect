@@ -20,6 +20,7 @@
             return Number.isNaN(age) || age < 0 ? null : age;
         },
     }"
+    x-on:date-selected="birthdate = $event.detail.value"
     class="space-y-8"
 >
     <section>
@@ -48,7 +49,15 @@
                     <label for="date_of_birth" class="{{ $labelClass }}">Date of Birth</label>
                     <span x-show="age() !== null" x-text="`(${age()} years old)`" class="text-xs font-semibold text-green-700"></span>
                 </div>
-                <input id="date_of_birth" name="date_of_birth" type="date" x-model="birthdate" value="{{ old('date_of_birth', optional($patient->birthdate)->format('Y-m-d')) }}" required class="{{ $inputClass }}">
+                <div class="mt-2">
+                    <x-date-picker
+                        name="date_of_birth"
+                        id="date_of_birth"
+                        :value="old('date_of_birth', optional($patient->birthdate)->format('Y-m-d'))"
+                        :max="now()->format('Y-m-d')"
+                        required
+                    />
+                </div>
                 @error('date_of_birth') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 

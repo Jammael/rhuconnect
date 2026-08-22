@@ -91,6 +91,68 @@ class RoleAccessControlTest extends TestCase
         $this->assertSame('ACTIVE', $administrator->account_status);
     }
 
+    public function test_non_administrator_cannot_bulk_update_user_statuses(): void
+    {
+        $user = $this->userWithRole('Doctor');
+
+        $this
+            ->actingAs($user)
+            ->patch('/admin/users/bulk-status', [
+                'user_ids' => [$user->id + 1],
+                'account_status' => 'INACTIVE',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_administrator_self_id_is_excluded_from_bulk_deactivate(): void
+    {
+        $administrator = $this->userWithRole('Administrator');
+        $otherUser = $this->userWithRole('Doctor', ['account_status' => 'ACTIVE']);
+
+        $response = $this
+            ->actingAs($administrator)
+            ->patch('/admin/users/bulk-status', [
+                'user_ids' => [$administrator->id, $otherUser->id],
+                'account_status' => 'INACTIVE',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('self_excluded', true)
+            ->assertJsonPath('updated_count', 1);
+
+        $administrator->refresh();
+        $otherUser->refresh();
+
+        $this->assertSame('ACTIVE', $administrator->account_status);
+        $this->assertSame('INACTIVE', $otherUser->account_status);
+    }
+
+    public function test_administrator_can_bulk_update_selected_users_statuses(): void
+    {
+        $administrator = $this->userWithRole('Administrator');
+        $firstUser = $this->userWithRole('Doctor', ['account_status' => 'ACTIVE']);
+        $secondUser = $this->userWithRole('Nurse', ['account_status' => 'ACTIVE']);
+
+        $response = $this
+            ->actingAs($administrator)
+            ->patch('/admin/users/bulk-status', [
+                'user_ids' => [$firstUser->id, $secondUser->id],
+                'account_status' => 'INACTIVE',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('self_excluded', false)
+            ->assertJsonPath('updated_count', 2);
+
+        $firstUser->refresh();
+        $secondUser->refresh();
+
+        $this->assertSame('INACTIVE', $firstUser->account_status);
+        $this->assertSame('INACTIVE', $secondUser->account_status);
+    }
+
     public function test_generic_dashboard_routes_users_to_their_role_dashboard(): void
     {
         $expectations = [

@@ -2,12 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Services\DoctorAvailabilityService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private readonly DoctorAvailabilityService $doctorAvailabilityService,
+    ) {
+    }
+
     public function index(Request $request): View|RedirectResponse
     {
         $user = $request->user();
@@ -27,6 +34,8 @@ class DashboardController extends Controller
 
     public function admin(Request $request): View
     {
+        $doctorAvailability = $this->adminDoctorAvailability();
+
         return view('dashboards.admin', $this->dashboardData($request, 'Administrator', [
             'pageTitle' => 'Administrator Dashboard',
             'pageSubtitle' => 'Monitor clinic operations, access, and service flow.',
@@ -35,7 +44,7 @@ class DashboardController extends Controller
                 ['label' => "Today's Appointments", 'value' => '24', 'caption' => '+8% from yesterday', 'tone' => 'green'],
                 ['label' => 'Patients in Queue', 'value' => '12', 'caption' => 'Current queue status', 'tone' => 'orange'],
                 ['label' => 'Completed Visits', 'value' => '18', 'caption' => 'Completed today', 'tone' => 'blue'],
-                ['label' => 'Available Doctors', 'value' => '2', 'caption' => 'Currently available', 'tone' => 'purple'],
+                ['label' => 'Available Doctors', 'value' => (string) $doctorAvailability['available_count'], 'caption' => 'Currently available', 'tone' => 'purple'],
             ],
             'primary' => [
                 'title' => "Today's Appointments",
@@ -54,12 +63,47 @@ class DashboardController extends Controller
             ],
             'secondary' => [
                 'title' => 'Doctor Availability',
-                'items' => [
-                    ['title' => 'Dr. Elena Cruz', 'subtitle' => 'Family Medicine', 'status' => ['label' => 'Available', 'tone' => 'green']],
-                    ['title' => 'Dr. Marco Lim', 'subtitle' => 'General Practice', 'status' => ['label' => 'Unavailable', 'tone' => 'gray']],
-                ],
+                'items' => $doctorAvailability['items'],
             ],
         ]));
+    }
+
+    /**
+     * Build the availability snapshot shared by the Admin stat and detail card.
+     *
+     * @return array{available_count: int, items: array<int, array<string, mixed>>}
+     */
+    private function adminDoctorAvailability(): array
+    {
+        $today = today();
+
+        $doctors = User::query()
+            ->whereHas('role', fn ($query) => $query->where('name', 'Doctor'))
+            ->orderBy('name')
+            ->get();
+
+        $availability = $doctors->map(function (User $doctor) use ($today): array {
+            $isAvailable = $this->doctorAvailabilityService->getAvailableSlots($doctor, $today) !== [];
+
+            return [
+                'title' => $doctor->name,
+                'subtitle' => $isAvailable ? 'Available for appointments today' : 'No availability scheduled today',
+                'available' => $isAvailable,
+                'status' => [
+                    'label' => $isAvailable ? 'Available' : 'Unavailable',
+                    'tone' => $isAvailable ? 'green' : 'gray',
+                ],
+            ];
+        });
+
+        return [
+            'available_count' => $availability->where('available', true)->count(),
+            'items' => $availability
+                ->take(6)
+                ->map(fn (array $doctor) => collect($doctor)->except('available')->all())
+                ->values()
+                ->all(),
+        ];
     }
 
     private function doctor(Request $request): View

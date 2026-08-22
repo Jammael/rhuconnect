@@ -2,6 +2,7 @@
     'pageTitle' => 'Dashboard',
     'pageSubtitle' => '',
     'context' => '',
+    'breadcrumb' => [],
     'portalLabel' => 'Portal',
     'roleLabel' => '',
     'navGroups' => [],
@@ -18,9 +19,6 @@
     $avatarUrl = $user?->avatar_path && Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar_path)
         ? asset('storage/' . $user->avatar_path)
         : null;
-
-    $hour = now()->hour;
-    $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
     $navIcons = [
         'Dashboard' => '<path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M9 21v-6h6v6" />',
@@ -111,25 +109,53 @@
             "
         ></div>
 
-        <div class="min-h-screen bg-slate-50 text-slate-900 lg:flex" x-data="{ sidebarOpen: false }">
+        <div
+            class="min-h-screen bg-slate-50 text-slate-900 lg:flex"
+            x-data="{
+                sidebarOpen: false,
+                sidebarCollapsed: localStorage.getItem('rhu_sidebar_collapsed') === 'true',
+                isDesktop: window.innerWidth >= 1024,
+                init() {
+                    this.$watch('sidebarCollapsed', (value) => localStorage.setItem('rhu_sidebar_collapsed', value));
+                    window.addEventListener('resize', () => { this.isDesktop = window.innerWidth >= 1024; });
+                },
+            }"
+        >
             <div x-cloak x-show="sidebarOpen" class="fixed inset-0 z-40 bg-slate-900/40 lg:hidden" x-on:click="sidebarOpen = false"></div>
 
             <aside
-                class="fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col border-r border-slate-200 bg-white shadow-xl shadow-slate-200/60 transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 lg:shadow-none"
-                x-bind:class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+                class="fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col border-r border-slate-200 bg-white shadow-xl shadow-slate-200/60 transition-all duration-200 lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 lg:shadow-none"
+                x-bind:class="{
+                    'translate-x-0': sidebarOpen,
+                    '-translate-x-full lg:translate-x-0': !sidebarOpen,
+                    'lg:w-20': sidebarCollapsed && isDesktop,
+                    'lg:w-64': !sidebarCollapsed || !isDesktop,
+                }"
             >
-                <div class="flex h-20 items-center gap-3 border-b border-slate-100 px-6">
+                <div class="flex h-20 items-center gap-3 border-b border-slate-100 px-6" x-bind:class="{ 'justify-center border-transparent px-0': sidebarCollapsed && isDesktop }">
                     <x-application-logo class="h-11 w-11 rounded-xl shadow-lg shadow-green-600/20" />
-                    <div>
+                    <div x-cloak x-show="!sidebarCollapsed || !isDesktop" x-transition.opacity>
                         <p class="text-base font-extrabold leading-tight text-green-700">RHUConnect</p>
                         <p class="text-xs font-semibold text-slate-400">{{ $portalLabel }}</p>
                     </div>
                 </div>
 
-                <nav class="flex-1 space-y-7 overflow-y-auto px-4 py-6">
+                <button
+                    type="button"
+                    class="absolute -right-3 top-8 z-10 hidden h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-md shadow-slate-200/70 transition hover:border-green-300 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 lg:flex"
+                    x-on:click="sidebarCollapsed = !sidebarCollapsed"
+                    x-bind:aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+                    x-bind:title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+                >
+                    <svg class="h-4 w-4 transition-transform duration-200" x-bind:class="{ 'rotate-180': sidebarCollapsed }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                </button>
+
+                <nav class="flex-1 space-y-7 overflow-y-auto px-4 py-6" x-bind:class="{ 'px-2': sidebarCollapsed && isDesktop }">
                     @foreach ($navGroups as $group => $items)
                         <div>
-                            <p class="px-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">{{ $group }}</p>
+                            <p x-cloak x-show="!sidebarCollapsed || !isDesktop" x-transition.opacity class="px-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">{{ $group }}</p>
                             <div class="mt-3 space-y-1">
                                 @foreach ($items as $item)
                                     @php
@@ -137,17 +163,18 @@
                                     @endphp
                                     <a
                                         href="{{ $navHref($item) }}"
-                                        class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ $isActive ? 'bg-green-50 text-green-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900' }}"
+                                        class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 {{ $isActive ? 'bg-gradient-to-r from-green-600 to-green-500 text-white shadow-md shadow-green-600/20' : 'text-slate-500 hover:translate-x-0.5 hover:bg-green-50 hover:text-green-700' }}"
+                                        x-bind:class="{ 'justify-center px-2': sidebarCollapsed && isDesktop }"
                                     >
-                                        @if ($isActive)
-                                            <span class="absolute left-0 h-7 w-1 rounded-r-full bg-green-600"></span>
-                                        @endif
                                         <span class="shrink-0">
-                                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <svg class="h-5 w-5 transition-colors duration-150 {{ $isActive ? 'text-white' : 'text-slate-400 group-hover:text-green-600' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                 {!! $navIcon($item) !!}
                                             </svg>
                                         </span>
-                                        <span>{{ $navLabel($item) }}</span>
+                                        <span x-cloak x-show="!sidebarCollapsed || !isDesktop" x-transition.opacity>{{ $navLabel($item) }}</span>
+                                        <span x-cloak x-show="sidebarCollapsed && isDesktop" x-transition.opacity class="pointer-events-none absolute left-full z-50 ml-3 whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg shadow-slate-900/20 transition-opacity group-hover:opacity-100">
+                                            {{ $navLabel($item) }}
+                                        </span>
                                     </a>
                                 @endforeach
                             </div>
@@ -155,11 +182,12 @@
                     @endforeach
                 </nav>
 
-                <div class="border-t border-slate-100 p-4">
-                    <div class="relative flex items-center gap-2 rounded-xl bg-slate-50 p-2" x-data="{ menuOpen: false }">
+                <div class="border-t border-slate-100 p-4" x-bind:class="{ 'p-2': sidebarCollapsed && isDesktop }">
+                    <div class="group relative flex items-center gap-2 rounded-xl bg-slate-50 p-2" x-bind:class="{ 'flex-col justify-center bg-transparent p-1': sidebarCollapsed && isDesktop }" x-data="{ menuOpen: false }">
                         <a
                             href="{{ route('profile.edit') }}"
                             class="group flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
+                            x-bind:class="{ 'flex-none': sidebarCollapsed && isDesktop }"
                             aria-label="Open profile page"
                         >
                             @if ($avatarUrl)
@@ -173,13 +201,14 @@
                                     {{ $initials }}
                                 </div>
                             @endif
-                            <div class="min-w-0 flex-1 text-left">
+                            <div x-cloak x-show="!sidebarCollapsed || !isDesktop" x-transition.opacity class="min-w-0 flex-1 text-left">
                                 <p class="truncate text-sm font-bold text-slate-800 transition group-hover:text-green-700">{{ $user->name }}</p>
                                 <p class="truncate text-xs font-medium text-slate-500">{{ $roleLabel }}</p>
                             </div>
                         </a>
                         <button
                             class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-white hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
+                            x-bind:class="{ 'flex h-8 w-8 items-center justify-center p-0': sidebarCollapsed && isDesktop }"
                             type="button"
                             x-on:click="menuOpen = ! menuOpen"
                             aria-label="Open account menu"
@@ -192,11 +221,19 @@
                             </svg>
                         </button>
 
+                        <span x-cloak x-show="sidebarCollapsed && isDesktop" x-transition.opacity class="pointer-events-none absolute bottom-full left-0 z-50 mb-3 whitespace-nowrap rounded-lg bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg shadow-slate-900/20 transition-opacity group-hover:opacity-100">
+                            {{ $user->name }}
+                        </span>
+
                         <div
                             x-cloak
                             x-show="menuOpen"
                             x-on:click.outside="menuOpen = false"
-                            class="absolute bottom-full right-0 z-50 mb-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-200/70"
+                            class="absolute z-50 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-200/70"
+                            x-bind:class="{
+                                'bottom-full right-0 mb-2': !sidebarCollapsed || !isDesktop,
+                                'left-full top-1/2 ml-2 -translate-y-1/2': sidebarCollapsed && isDesktop,
+                            }"
                         >
                             <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-green-700">
                                 Profile
@@ -214,34 +251,34 @@
 
             <div class="min-w-0 flex-1">
                 <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-slate-50/95 backdrop-blur">
-                    <div class="flex min-h-20 items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+                    <div class="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
                         <div class="flex items-center gap-3">
-                            <button class="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 shadow-sm lg:hidden" type="button" x-on:click="sidebarOpen = true" aria-label="Open navigation">
+                            <button class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors duration-150 hover:border-green-200 hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 lg:hidden" type="button" x-on:click="sidebarOpen = true" aria-label="Open navigation">
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M4 6h16" />
                                     <path d="M4 12h16" />
                                     <path d="M4 18h16" />
                                 </svg>
                             </button>
-                            <div>
-                                <h1 class="text-xl font-extrabold text-slate-900 sm:text-2xl">{{ $pageTitle }}</h1>
-                                <p class="mt-1 text-sm font-medium text-slate-500">{{ $pageSubtitle }}</p>
+                            <div class="min-w-0">
+                                <x-breadcrumb :trail="$breadcrumb" />
+                                <h1 class="sr-only">{{ $pageTitle }}</h1>
                             </div>
                         </div>
 
-                        <div class="flex shrink-0 items-center gap-3">
+                        <div class="flex shrink-0 items-center gap-2 sm:gap-3">
                             <button
                                 type="button"
-                                class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 shadow-xs transition hover:border-green-300 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
+                                class="flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-xs font-semibold text-slate-500 shadow-sm transition-colors duration-150 hover:border-green-200 hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 md:w-auto md:gap-2 md:px-3"
                                 x-on:click="$dispatch('open-command-palette')"
                                 aria-label="Search"
                             >
-                                <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <svg class="h-5 w-5 shrink-0 text-slate-400 transition-colors duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <circle cx="11" cy="11" r="8" />
                                     <path d="m21 21-4.3-4.3" />
                                 </svg>
-                                <span class="hidden sm:inline">Search...</span>
-                                <kbd class="hidden rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 sm:inline">⌘K</kbd>
+                                <span class="hidden md:inline">Search...</span>
+                                <kbd class="hidden rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 md:inline">⌘K</kbd>
                             </button>
 
                             <div
@@ -353,7 +390,7 @@
                                 }"
                             >
                                 <button
-                                    class="relative rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 shadow-sm transition hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-slate-50"
+                                    class="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors duration-150 hover:border-green-200 hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                                     type="button"
                                     aria-label="Notifications"
                                     x-on:click="open = ! open"
@@ -363,7 +400,7 @@
                                         <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" />
                                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9" />
                                     </svg>
-                                    <span x-cloak x-show="unreadCount > 0" class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-white bg-red-500"></span>
+                                    <span x-cloak x-show="unreadCount > 0" x-text="unreadCount > 9 ? '9+' : unreadCount" class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-extrabold leading-none text-white"></span>
                                 </button>
 
                                 <div
@@ -418,17 +455,12 @@
                                     </div>
                                 </div>
                             </div>
-                            <p class="hidden text-right text-sm font-semibold text-slate-500 sm:block">{{ now()->format('F j, Y / l') }}</p>
+                            <p class="hidden h-11 items-center rounded-2xl border border-slate-200 bg-white px-4 text-right text-sm font-semibold text-slate-500 shadow-sm xl:flex">{{ now()->format('F j, Y / l') }}</p>
                         </div>
                     </div>
                 </header>
 
                 <main class="px-4 py-8 sm:px-6 lg:px-8">
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $greeting }}, {{ Str::of($user->name)->before(' ') }}</h2>
-                        <p class="mt-2 max-w-3xl text-sm font-medium leading-6 text-slate-500">{{ $context }}</p>
-                    </div>
-
                     @yield('content')
                 </main>
             </div>

@@ -61,9 +61,14 @@
     </div>
 
     <div>
-        <label for="password" class="block text-sm font-semibold text-slate-700">Password</label>
-        <input id="password" name="password" type="password" @if (! isset($managedUser)) required @endif autocomplete="new-password"
-            class="mt-2 block w-full rounded-lg border-slate-300 shadow-sm focus:border-green-700 focus:ring-green-700">
+        <x-password-input
+            id="password"
+            name="password"
+            label="Password"
+            :required="! isset($managedUser)"
+            autocomplete="new-password"
+            :showStrengthMeter="true"
+        />
         @isset($managedUser)
             <p class="mt-2 text-xs text-slate-500">Leave blank to keep the current password.</p>
         @endisset
@@ -73,9 +78,14 @@
     </div>
 
     <div>
-        <label for="password_confirmation" class="block text-sm font-semibold text-slate-700">Confirm Password</label>
-        <input id="password_confirmation" name="password_confirmation" type="password" @if (! isset($managedUser)) required @endif autocomplete="new-password"
-            class="mt-2 block w-full rounded-lg border-slate-300 shadow-sm focus:border-green-700 focus:ring-green-700">
+        <x-password-input
+            id="password_confirmation"
+            name="password_confirmation"
+            label="Confirm Password"
+            :required="! isset($managedUser)"
+            autocomplete="new-password"
+            :showStrengthMeter="false"
+        />
     </div>
 </div>
 

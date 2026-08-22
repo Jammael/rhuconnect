@@ -19,6 +19,11 @@
     'pageTitle' => $pageTitle,
     'pageSubtitle' => 'Configure standard weekly hours and appointment slot duration.',
     'context' => 'Set recurring shifts for each day of the week. These hours determine bookable appointment slots.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'Doctor Availability', 'link' => route('doctor-availability.index')],
+        ['label' => $pageTitle],
+    ],
     'portalLabel' => $isAdmin ? 'Admin Portal' : 'Doctor Portal',
     'roleLabel' => $roleLabel,
     'navGroups' => $navGroups,
@@ -188,4 +193,3 @@
         </form>
     </div>
 @endsection
-

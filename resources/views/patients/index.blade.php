@@ -17,6 +17,10 @@
     'pageTitle' => 'Patient Records',
     'pageSubtitle' => 'Manage RHUConnect patient information.',
     'context' => 'Search, review, and maintain patient demographic and clinical intake records.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'Patient Records'],
+    ],
     'portalLabel' => $roleLabel === 'Administrator' ? 'Admin Portal' : $roleLabel.' Portal',
     'roleLabel' => $roleLabel,
     'navGroups' => $navGroups,

@@ -29,7 +29,7 @@
 
                 <x-auth-session-status class="mt-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800" :status="session('status')" />
 
-                <form class="mt-8 space-y-5" method="POST" action="{{ route('login') }}" x-data="{ showPassword: false, submitting: false }" x-init="window.addEventListener('pageshow', (event) => { if (event.persisted) submitting = false; })" x-on:submit="submitting = true">
+                <form class="mt-8 space-y-5" method="POST" action="{{ route('login') }}" x-data="{ submitting: false }" x-init="window.addEventListener('pageshow', (event) => { if (event.persisted) submitting = false; })" x-on:submit="submitting = true">
                     @csrf
 
                     <div>
@@ -60,49 +60,24 @@
                     </div>
 
                     <div>
-                        <div class="flex items-center justify-between gap-4">
-                            <label for="password" class="block text-sm font-semibold text-gray-700">Password</label>
-                            @if (Route::has('password.request'))
-                                <a class="text-sm font-semibold text-green-600 transition hover:text-green-700 focus:rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2" href="{{ route('password.request') }}">
-                                    Forgot Password?
-                                </a>
-                            @endif
-                        </div>
-                        <div class="relative mt-2">
-                            <span class="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-gray-400" aria-hidden="true">
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect width="18" height="11" x="3" y="11" rx="2" />
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                </svg>
-                            </span>
-                            <input
-                                id="password"
-                                class="block h-12 w-full rounded-lg border border-gray-300 bg-white pl-11 pr-11 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-500"
-                                x-bind:type="showPassword ? 'text' : 'password'"
-                                name="password"
-                                required
-                                autocomplete="current-password"
-                                placeholder="Enter your password"
-                                aria-describedby="@error('password') password-error @enderror"
-                            >
-                            <button
-                                class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-gray-400 transition hover:text-green-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
-                                type="button"
-                                x-on:click="showPassword = ! showPassword"
-                                x-bind:aria-label="showPassword ? 'Hide password' : 'Show password'"
-                            >
-                                <svg x-show="! showPassword" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M2.06 12.35a1 1 0 0 1 0-.7 11 11 0 0 1 19.88 0 1 1 0 0 1 0 .7 11 11 0 0 1-19.88 0" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
-                                <svg x-cloak x-show="showPassword" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="m2 2 20 20" />
-                                    <path d="M6.7 6.7A10.9 10.9 0 0 0 2.06 11.65a1 1 0 0 0 0 .7 11 11 0 0 0 15.24 5.3" />
-                                    <path d="M10.8 10.8A3 3 0 0 0 15.2 15.2" />
-                                    <path d="M12 5c4.4 0 8.1 2.6 9.94 6.65a1 1 0 0 1 0 .7 10.8 10.8 0 0 1-2.1 3.1" />
-                                </svg>
-                            </button>
-                        </div>
+                        <x-password-input
+                            id="password"
+                            name="password"
+                            label="Password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="Enter your password"
+                            :showStrengthMeter="true"
+                            aria-describedby="@error('password') password-error @enderror"
+                        >
+                            <x-slot:headerExtra>
+                                @if (Route::has('password.request'))
+                                    <a class="text-sm font-semibold text-green-600 transition hover:text-green-700 focus:rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2" href="{{ route('password.request') }}">
+                                        Forgot Password?
+                                    </a>
+                                @endif
+                            </x-slot:headerExtra>
+                        </x-password-input>
                         @error('password')
                             <p id="password-error" class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror

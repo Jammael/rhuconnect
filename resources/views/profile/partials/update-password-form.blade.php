@@ -18,38 +18,35 @@
         @method('put')
 
         <div>
-            <label for="update_password_current_password" class="block text-sm font-medium text-slate-700">{{ __('Current Password') }}</label>
-            <input
+            <x-password-input
                 id="update_password_current_password"
                 name="current_password"
-                type="password"
-                class="mt-2 block w-full rounded-lg border border-slate-200 px-4 py-2.5 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                :label="__('Current Password')"
                 autocomplete="current-password"
-            >
+                :showStrengthMeter="false"
+            />
             <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
         </div>
 
         <div>
-            <label for="update_password_password" class="block text-sm font-medium text-slate-700">{{ __('New Password') }}</label>
-            <input
+            <x-password-input
                 id="update_password_password"
                 name="password"
-                type="password"
-                class="mt-2 block w-full rounded-lg border border-slate-200 px-4 py-2.5 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                :label="__('New Password')"
                 autocomplete="new-password"
-            >
+                :showStrengthMeter="true"
+            />
             <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
         </div>
 
         <div>
-            <label for="update_password_password_confirmation" class="block text-sm font-medium text-slate-700">{{ __('Confirm Password') }}</label>
-            <input
+            <x-password-input
                 id="update_password_password_confirmation"
                 name="password_confirmation"
-                type="password"
-                class="mt-2 block w-full rounded-lg border border-slate-200 px-4 py-2.5 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                :label="__('Confirm Password')"
                 autocomplete="new-password"
-            >
+                :showStrengthMeter="false"
+            />
             <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
         </div>
 

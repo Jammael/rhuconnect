@@ -2,6 +2,11 @@
     'pageTitle' => 'Edit User',
     'pageSubtitle' => 'Update staff account details, role, status, or password.',
     'context' => 'Keep this staff account accurate without changing the underlying account workflow.',
+    'breadcrumb' => [
+        ['label' => 'Dashboard', 'link' => route('dashboard')],
+        ['label' => 'User Management', 'link' => route('admin.users.index')],
+        ['label' => $managedUser->name],
+    ],
     'portalLabel' => 'Admin Portal',
     'roleLabel' => 'Administrator',
     'navGroups' => [
