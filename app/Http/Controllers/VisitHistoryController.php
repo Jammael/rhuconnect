@@ -8,7 +8,7 @@ use Illuminate\View\View;
 
 class VisitHistoryController extends Controller
 {
-    private const ALLOWED_ROLES = ['Administrator', 'Doctor', 'Nurse', 'Data Encoder'];
+    private const ALLOWED_ROLES = ['Administrator', 'Doctor', 'Nurse', 'Data Encoder', 'Midwife'];
 
     public function index(Request $request): View
     {
@@ -18,6 +18,10 @@ class VisitHistoryController extends Controller
         $visitHistories = VisitHistory::query()
             ->with(['appointment.patient', 'doctor'])
             ->when($user->hasRole('Doctor'), fn ($query) => $query->where('doctor_id', $user->id))
+            ->when($user->hasRole('Midwife'), fn ($query) => $query->whereHas(
+                'appointment.prenatalCase',
+                fn ($query) => $query->where('midwife_id', $user->id)
+            ))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->toString();
 
@@ -43,6 +47,12 @@ class VisitHistoryController extends Controller
         $user = $request->user();
         abort_unless($user?->hasRole(self::ALLOWED_ROLES), 403);
         abort_if($user->hasRole('Doctor') && $user->id !== $visitHistory->doctor_id, 403);
+
+        if ($user->hasRole('Midwife')) {
+            $visitHistory->loadMissing('appointment.prenatalCase');
+            $ownsLinkedCase = $visitHistory->appointment->prenatalCase?->midwife_id === $user->id;
+            abort_unless($ownsLinkedCase, 403);
+        }
 
         $visitHistory->load(['appointment.patient', 'doctor']);
 

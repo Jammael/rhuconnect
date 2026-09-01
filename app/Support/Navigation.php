@@ -28,7 +28,7 @@ class Navigation
                 'MAIN MENU' => ['Dashboard', ['label' => 'Patient Queue', 'route' => 'queue.index', 'active' => 'queue.*'], 'Patient Records', ['label' => 'Appointments', 'route' => 'appointments.index', 'active' => 'appointments.*'], ['label' => 'Patient Visit History', 'route' => 'visit-history.index', 'active' => 'visit-history.*'], ['label' => 'Vitals/Triage', 'route' => 'vitals.index', 'active' => 'vitals.*'], 'Profile'],
             ],
             'Midwife' => [
-                'MAIN MENU' => ['Dashboard', ['label' => 'Maternal Care Appointments', 'route' => 'appointments.index', 'active' => 'appointments.*'], 'Patient Records', 'Visit History', 'Profile'],
+                'MAIN MENU' => ['Dashboard', ['label' => 'Maternal Care Appointments', 'route' => 'appointments.index', 'active' => 'appointments.*'], ['label' => 'Prenatal Cases', 'route' => 'prenatal-cases.index', 'active' => 'prenatal-cases.*'], 'Patient Records', ['label' => 'Visit History', 'route' => 'visit-history.index', 'active' => 'visit-history.*'], 'Profile'],
             ],
             'Data Encoder' => [
                 'MAIN MENU' => ['Dashboard', 'Patient Records', ['label' => 'Appointment Entry', 'route' => 'appointments.index', 'active' => 'appointments.*'], ['label' => 'Patient Visit History', 'route' => 'visit-history.index', 'active' => 'visit-history.*'], ['label' => 'SMS Notifications Log', 'route' => 'sms-notifications.index', 'active' => 'sms-notifications.*'], 'Profile'],

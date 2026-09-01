@@ -11,32 +11,62 @@
 @endphp
 
 {{--
-    SKELETON DEMO — stat card loading state.
-    `loaded` is set to true after a 400 ms artificial delay so the skeleton
-    placeholder is visible during development / review. When these stat cards
-    are later converted to fetch data asynchronously via Alpine/JS, replace
-    `setTimeout(() => loaded = true, 400)` with the callback that fires once
-    your fetch() resolves — no other markup changes are needed.
+    Stat cards: skeleton for the first ~400ms, then real cards fed from
+    Alpine-held `stats` data. A 10s poll against dashboard.stats-data keeps
+    them fresh without a page reload — same interval + X-Background-Poll
+    pattern as queue/index.blade.php's board refresh.
 --}}
 <div
     class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4"
-    x-data="{ loaded: false }"
-    x-init="setTimeout(() => loaded = true, 400)"
+    x-data="{
+        loaded: false,
+        stats: @js($stats),
+        init() {
+            setTimeout(() => this.loaded = true, 400);
+            setInterval(() => this.refreshStats(), 10000);
+        },
+        async refreshStats() {
+            try {
+                const response = await fetch('{{ route('dashboard.stats-data') }}', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Background-Poll': 'true',
+                    },
+                });
+
+                if (! response.ok || ! response.headers.get('content-type')?.includes('application/json')) {
+                    return;
+                }
+
+                const data = await response.json();
+                this.stats = data.stats ?? this.stats;
+            } catch (err) {
+                // Silently ignore — the next 10s tick will retry.
+            }
+        },
+    }"
 >
-    {{-- Skeleton placeholders — shown for ~400 ms on page load --}}
+    {{-- Skeleton placeholders — shown for ~400 ms on initial load --}}
     @foreach ($stats as $_)
         <template x-if="! loaded">
             <x-skeleton-card />
         </template>
     @endforeach
 
-    {{-- Real stat cards — revealed once `loaded` flips to true --}}
-    @foreach ($stats as $stat)
+    {{--
+        Real stat cards — server-rendered up front (so the initial response
+        carries real text, not just JSON tucked in x-data), then kept fresh
+        by binding each field to the same index in the polled `stats` array.
+        Index-based, not label-based: every *Stats() method always returns
+        the same fixed count/order for its role, so positional binding is
+        safe and avoids re-matching by label on every refresh.
+    --}}
+    @foreach ($stats as $index => $stat)
         @php $tone = $toneClasses[$stat['tone']] ?? $toneClasses['green']; @endphp
         <template x-if="loaded">
             <article class="card-hover rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
                 <div class="flex items-start justify-between gap-4">
-                    <p class="text-sm font-bold text-slate-500">{{ $stat['label'] }}</p>
+                    <p class="text-sm font-bold text-slate-500" x-text="stats[{{ $index }}].label">{{ $stat['label'] }}</p>
                     <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl {{ $tone['icon'] }}">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M4 19V5" />
@@ -47,8 +77,8 @@
                         </svg>
                     </span>
                 </div>
-                <p class="mt-5 text-3xl font-extrabold tracking-normal text-slate-900">{{ $stat['value'] }}</p>
-                <p class="mt-2 text-sm font-medium text-slate-500">{{ $stat['caption'] }}</p>
+                <p class="mt-5 text-3xl font-extrabold tracking-normal text-slate-900" x-text="stats[{{ $index }}].value">{{ $stat['value'] }}</p>
+                <p class="mt-2 text-sm font-medium text-slate-500" x-text="stats[{{ $index }}].caption">{{ $stat['caption'] }}</p>
             </article>
         </template>
     @endforeach

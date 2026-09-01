@@ -7,6 +7,7 @@ use App\Services\DashboardStatsService;
 use App\Services\DoctorAvailabilityService;
 use App\Support\Navigation;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -35,18 +36,32 @@ class DashboardController extends Controller
         };
     }
 
+    /**
+     * JSON counterpart to index()/admin(): the same per-role stats array
+     * that gets baked into the initial page render, fetched fresh on
+     * demand so dashboards.partials.overview's stat cards can poll without
+     * a full page reload. Reuses statsForRole() so the role -> stats
+     * mapping lives in exactly one place.
+     */
+    public function statsData(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $roleName = $user->hasRole('Administrator') ? 'Administrator' : $this->roleName($user);
+
+        return response()->json([
+            'stats' => $this->statsForRole($request, $roleName),
+        ]);
+    }
+
     public function admin(Request $request): View
     {
         $doctorAvailability = $this->adminDoctorAvailability();
-
-        $stats = $this->stats->adminStats();
-        $stats[] = ['label' => 'Available Doctors', 'value' => (string) $doctorAvailability['available_count'], 'caption' => 'Currently available', 'tone' => 'purple'];
 
         return view('dashboards.admin', $this->dashboardData($request, 'Administrator', [
             'pageTitle' => 'Administrator Dashboard',
             'pageSubtitle' => 'Monitor clinic operations, access, and service flow.',
             'context' => 'Here is the clinic-wide pulse for appointments, queues, providers, and reports.',
-            'stats' => $stats,
+            'stats' => $this->statsForRole($request, 'Administrator'),
             'primary' => $this->stats->adminTodaysAppointments(),
             'actions' => [
                 ['label' => 'Manage Appointments', 'description' => 'Review bookings and walk-ins.', 'route' => 'appointments.index', 'tone' => 'green'],
@@ -107,7 +122,7 @@ class DashboardController extends Controller
             'pageTitle' => 'Doctor Dashboard',
             'pageSubtitle' => 'Manage consultations, availability, and patient continuity.',
             'context' => 'Your schedule and waiting patients are ready for a smooth clinic day.',
-            'stats' => $this->stats->doctorStats($doctor),
+            'stats' => $this->statsForRole($request, 'Doctor'),
             'primary' => $this->stats->doctorTodaysSchedule($doctor),
             'actions' => [
                 ['label' => 'View Full Schedule', 'description' => 'See today and upcoming visits.', 'route' => 'appointments.index', 'tone' => 'green'],
@@ -128,7 +143,7 @@ class DashboardController extends Controller
             'pageTitle' => 'Nurse Dashboard',
             'pageSubtitle' => 'Coordinate queue flow, triage, and patient preparation.',
             'context' => 'The current queue is organized so you can move patients through intake quickly.',
-            'stats' => $this->stats->nurseStats(),
+            'stats' => $this->statsForRole($request, 'Nurse'),
             'primary' => $this->stats->nurseQueueTable(),
             'actions' => [
                 ['label' => 'Manage Queue', 'description' => 'Advance or reorder patients.', 'route' => 'queue.index', 'tone' => 'green'],
@@ -142,19 +157,21 @@ class DashboardController extends Controller
 
     private function midwife(Request $request): View
     {
+        $midwife = $request->user();
+
         return view('dashboards.midwife', $this->dashboardData($request, 'Midwife', [
             'pageTitle' => 'Midwife Dashboard',
             'pageSubtitle' => 'Track maternal care appointments and follow-up visits.',
             'context' => 'Maternal care appointments and prenatal follow-ups are queued for review.',
-            'stats' => $this->stats->midwifeStats(),
-            'primary' => $this->stats->midwifeAppointmentsTable(),
+            'stats' => $this->statsForRole($request, 'Midwife'),
+            'primary' => $this->stats->midwifeAppointmentsTable($midwife),
             'actions' => [
                 ['label' => 'View Appointments', 'description' => 'Review maternal care schedule.', 'route' => 'appointments.index', 'tone' => 'green'],
-                ['label' => 'Log Visit', 'description' => 'Record maternal care notes.', 'route' => null, 'tone' => 'orange'],
+                ['label' => 'Log Visit', 'description' => 'Manage prenatal cases and notes.', 'route' => 'prenatal-cases.index', 'tone' => 'orange'],
                 ['label' => 'Patient Records', 'description' => 'Open maternal patient records.', 'route' => 'patients.index', 'tone' => 'blue'],
                 ['label' => 'Schedule Follow-up', 'description' => 'Plan the next care visit.', 'route' => 'appointments.create', 'tone' => 'purple'],
             ],
-            'secondary' => $this->stats->midwifeWatchlist(),
+            'secondary' => $this->stats->midwifeWatchlist($midwife),
         ]));
     }
 
@@ -164,7 +181,7 @@ class DashboardController extends Controller
             'pageTitle' => 'Data Encoder Dashboard',
             'pageSubtitle' => 'Keep patient records, appointment entries, and SMS logs updated.',
             'context' => 'Recent encoding activity and pending entries are ready for your review.',
-            'stats' => $this->stats->dataEncoderStats(),
+            'stats' => $this->statsForRole($request, 'Data Encoder'),
             'primary' => $this->stats->dataEncoderRecentEntries(),
             'actions' => [
                 ['label' => 'Add New Patient', 'description' => 'Create a placeholder record.', 'route' => 'patients.create', 'tone' => 'green'],
@@ -174,6 +191,34 @@ class DashboardController extends Controller
             ],
             'secondary' => $this->stats->dataEncoderRecentSms(),
         ]));
+    }
+
+    /**
+     * Single source of truth mapping a role name to its dashboard stats
+     * array — shared by the full page-render methods above and
+     * statsData()'s polling endpoint, so there is exactly one role -> stats
+     * switch in this controller.
+     */
+    private function statsForRole(Request $request, string $roleName): array
+    {
+        return match ($roleName) {
+            'Administrator' => $this->adminStatsArray(),
+            'Doctor' => $this->stats->doctorStats($request->user()),
+            'Nurse' => $this->stats->nurseStats(),
+            'Midwife' => $this->stats->midwifeStats($request->user()),
+            'Data Encoder' => $this->stats->dataEncoderStats(),
+            default => $this->stats->doctorStats($request->user()),
+        };
+    }
+
+    private function adminStatsArray(): array
+    {
+        $doctorAvailability = $this->adminDoctorAvailability();
+
+        $stats = $this->stats->adminStats();
+        $stats[] = ['label' => 'Available Doctors', 'value' => (string) $doctorAvailability['available_count'], 'caption' => 'Currently available', 'tone' => 'purple'];
+
+        return $stats;
     }
 
     private function dashboardData(Request $request, string $role, array $data): array

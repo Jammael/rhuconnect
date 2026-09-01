@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\DoctorAvailabilityException;
 use App\Models\DoctorAvailabilityTemplate;
 use App\Models\Patient;
+use App\Models\PrenatalCase;
 use App\Models\Queue;
 use App\Models\SmsNotification;
 use App\Models\User;
@@ -119,7 +120,15 @@ class DashboardStatsService
                 'caption' => 'Assigned to you',
                 'tone' => 'green',
             ],
-            $this->notYetActiveStat('Patients Waiting', 'Smart Queue module not yet active'),
+            [
+                'label' => 'Patients Waiting',
+                'value' => (string) $this->todaysQueueQuery()
+                    ->whereHas('appointment', fn ($query) => $query->where('doctor_id', $doctor->id))
+                    ->where('queue_status', 'Waiting')
+                    ->count(),
+                'caption' => 'Assigned to you',
+                'tone' => 'amber',
+            ],
             [
                 'label' => 'Completed Today',
                 'value' => (string) $ownToday()->where('status', 'Completed')->count(),
@@ -311,37 +320,86 @@ class DashboardStatsService
     }
 
     // -------------------------------------------------------------------
-    // Midwife — no maternal-care/prenatal/follow-up data model exists;
-    // represented as not-yet-active rather than shown under a misleading
-    // "maternal" label with unfiltered clinic-wide numbers.
+    // Midwife — real prenatal-case-backed numbers, scoped to this
+    // Midwife's own assigned cases (never clinic-wide, matching the
+    // self-scoping used for Doctor/Visit History elsewhere).
     // -------------------------------------------------------------------
 
-    public function midwifeStats(): array
+    public function midwifeStats(User $midwife): array
     {
+        $today = today();
+        $ownCases = fn () => PrenatalCase::query()->where('midwife_id', $midwife->id);
+        $ownCaseAppointments = fn () => $this->todaysAppointmentsQuery($today)
+            ->whereHas('prenatalCase', fn ($query) => $query->where('midwife_id', $midwife->id));
+
         return [
-            $this->notYetActiveStat("Today's Maternal Appointments", 'Maternal care tracking not yet active'),
-            $this->notYetActiveStat('Active Prenatal Cases', 'Maternal care tracking not yet active'),
-            $this->notYetActiveStat('Completed Visits', 'Maternal care tracking not yet active'),
-            $this->notYetActiveStat('Upcoming Follow-ups', 'Maternal care tracking not yet active'),
+            [
+                'label' => "Today's Maternal Appointments",
+                'value' => (string) $ownCaseAppointments()->count(),
+                'caption' => 'Assigned to you',
+                'tone' => 'green',
+            ],
+            [
+                'label' => 'Active Prenatal Cases',
+                'value' => (string) $ownCases()->where('status', 'Active')->count(),
+                'caption' => 'Currently managed',
+                'tone' => 'purple',
+            ],
+            [
+                'label' => 'Completed Visits',
+                'value' => (string) $ownCaseAppointments()->where('status', 'Completed')->count(),
+                'caption' => 'Completed today',
+                'tone' => 'blue',
+            ],
+            [
+                'label' => 'Upcoming Follow-ups',
+                'value' => (string) Appointment::query()
+                    ->whereHas('prenatalCase', fn ($query) => $query->where('midwife_id', $midwife->id)->where('status', 'Active'))
+                    ->whereIn('status', ['Pending', 'Approved'])
+                    ->where('appointment_date', '>', $today)
+                    ->count(),
+                'caption' => 'Scheduled ahead',
+                'tone' => 'amber',
+            ],
         ];
     }
 
-    public function midwifeAppointmentsTable(): array
+    public function midwifeAppointmentsTable(User $midwife, int $limit = 5): array
     {
+        $appointments = $this->todaysAppointmentsQuery(today())
+            ->whereHas('prenatalCase', fn ($query) => $query->where('midwife_id', $midwife->id))
+            ->with('patient')
+            ->orderBy('appointment_time')
+            ->limit($limit)
+            ->get();
+
         return [
             'title' => "Today's Maternal Care Appointments",
             'columns' => ['Patient', 'Visit Type', 'Time', 'Status'],
-            'rows' => [],
-            'empty_message' => 'Maternal care tracking not yet active.',
+            'rows' => $this->appointmentRows($appointments),
+            'empty_message' => 'No maternal care appointments scheduled today.',
         ];
     }
 
-    public function midwifeWatchlist(): array
+    public function midwifeWatchlist(User $midwife, int $limit = 5): array
     {
+        $cases = PrenatalCase::query()
+            ->where('midwife_id', $midwife->id)
+            ->where('status', 'Active')
+            ->where('is_high_risk', true)
+            ->with('patient')
+            ->orderBy('estimated_due_date')
+            ->limit($limit)
+            ->get();
+
         return [
             'title' => 'Maternal Care Watchlist',
-            'items' => [],
-            'empty_message' => 'Maternal care tracking not yet active.',
+            'items' => $cases->map(fn (PrenatalCase $case) => [
+                'title' => $case->patient->full_name,
+                'subtitle' => 'EDD '.$case->estimated_due_date->format('M d, Y').' · '.$case->trimester.' trimester',
+                'status' => ['label' => 'High Risk', 'tone' => 'red'],
+            ])->values()->all(),
+            'empty_message' => 'No high-risk cases currently flagged.',
         ];
     }
 

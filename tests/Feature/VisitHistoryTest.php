@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Appointment;
 use App\Models\Patient;
+use App\Models\PrenatalCase;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\VisitHistory;
@@ -136,7 +137,7 @@ class VisitHistoryTest extends TestCase
         }
     }
 
-    public function test_midwife_has_no_access_to_visit_history(): void
+    public function test_midwife_has_no_access_to_visit_history_unrelated_to_their_prenatal_cases(): void
     {
         $doctor = $this->userWithRole('Doctor');
         $appointment = Appointment::factory()->create(['doctor_id' => $doctor->id, 'status' => 'Approved']);
@@ -144,8 +145,49 @@ class VisitHistoryTest extends TestCase
 
         $midwife = $this->userWithRole('Midwife');
 
-        $this->actingAs($midwife)->get(route('visit-history.index'))->assertForbidden();
+        // Index still loads (it's a valid, if empty for them, list) — the
+        // real check is that this unrelated record is neither listed nor
+        // directly viewable.
+        $this->actingAs($midwife)->get(route('visit-history.index'))->assertOk()->assertDontSee($appointment->fresh()->patient->full_name);
         $this->actingAs($midwife)->get(route('visit-history.show', $appointment->fresh()->visitHistory))->assertForbidden();
+    }
+
+    public function test_midwife_can_view_visit_history_linked_to_their_own_prenatal_case_only(): void
+    {
+        $doctor = $this->userWithRole('Doctor');
+        $midwife = $this->userWithRole('Midwife');
+        $otherMidwife = $this->userWithRole('Midwife');
+
+        $ownCase = PrenatalCase::factory()->create(['midwife_id' => $midwife->id]);
+        $otherCase = PrenatalCase::factory()->create(['midwife_id' => $otherMidwife->id]);
+
+        $ownAppointment = Appointment::factory()->create([
+            'doctor_id' => $doctor->id,
+            'prenatal_case_id' => $ownCase->id,
+            'status' => 'Approved',
+        ]);
+        $otherAppointment = Appointment::factory()->create([
+            'doctor_id' => $doctor->id,
+            'prenatal_case_id' => $otherCase->id,
+            'status' => 'Approved',
+        ]);
+
+        $this->actingAs($doctor)->patch(route('appointments.status', $ownAppointment), ['status' => 'Completed', 'diagnosis' => 'Prenatal checkup, normal']);
+        $this->actingAs($doctor)->patch(route('appointments.status', $otherAppointment), ['status' => 'Completed', 'diagnosis' => 'Prenatal checkup, other midwife']);
+
+        $this->actingAs($midwife)
+            ->get(route('visit-history.index'))
+            ->assertOk()
+            ->assertSee($ownAppointment->fresh()->patient->full_name)
+            ->assertDontSee($otherAppointment->fresh()->patient->full_name);
+
+        $this->actingAs($midwife)
+            ->get(route('visit-history.show', $ownAppointment->fresh()->visitHistory))
+            ->assertOk();
+
+        $this->actingAs($midwife)
+            ->get(route('visit-history.show', $otherAppointment->fresh()->visitHistory))
+            ->assertForbidden();
     }
 
     private function userWithRole(string $roleName, array $attributes = []): User

@@ -8,6 +8,7 @@ use App\Http\Controllers\DoctorAvailabilityController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\PrenatalCaseController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QueueController;
 use App\Http\Controllers\SessionCloseController;
@@ -51,6 +52,8 @@ Route::middleware(['auth', 'idle', 'verified', 'active', 'role:Administrator'])
     });
 
 Route::middleware(['auth', 'idle', 'active'])->group(function () {
+    Route::get('/dashboard/stats-data', [DashboardController::class, 'statsData'])->name('dashboard.stats-data');
+
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
@@ -81,6 +84,9 @@ Route::middleware(['auth', 'idle', 'active'])->group(function () {
 
     Route::get('/visit-history', [VisitHistoryController::class, 'index'])->name('visit-history.index');
     Route::get('/visit-history/{visitHistory}', [VisitHistoryController::class, 'show'])->name('visit-history.show');
+
+    Route::get('/prenatal-cases/active-for-patient/{patient}', [PrenatalCaseController::class, 'activeForPatient'])->name('prenatal-cases.active-for-patient');
+    Route::resource('prenatal-cases', PrenatalCaseController::class)->except(['destroy']);
 
     Route::get('/sms-notifications', [SmsNotificationController::class, 'index'])->name('sms-notifications.index');
 

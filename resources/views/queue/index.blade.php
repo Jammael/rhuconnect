@@ -33,7 +33,6 @@
             waiting: @js($waiting),
             serving: @js($serving),
             history: @js($history),
-            refreshing: false,
             statusUrlTemplate: '{{ route('queue.status', ['queue' => '__ID__']) }}',
             statusUrl(id) {
                 return this.statusUrlTemplate.replace('__ID__', id);
@@ -42,27 +41,21 @@
                 setInterval(() => this.refresh(), 10000);
             },
             async refresh() {
-                this.refreshing = true;
+                const response = await fetch('{{ route('queue.board-data') }}', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Background-Poll': 'true',
+                    },
+                });
 
-                try {
-                    const response = await fetch('{{ route('queue.board-data') }}', {
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Background-Poll': 'true',
-                        },
-                    });
-
-                    if (! response.ok || ! response.headers.get('content-type')?.includes('application/json')) {
-                        return;
-                    }
-
-                    const data = await response.json();
-                    this.waiting = data.waiting ?? [];
-                    this.serving = data.serving ?? [];
-                    this.history = data.history ?? [];
-                } finally {
-                    this.refreshing = false;
+                if (! response.ok || ! response.headers.get('content-type')?.includes('application/json')) {
+                    return;
                 }
+
+                const data = await response.json();
+                this.waiting = data.waiting ?? [];
+                this.serving = data.serving ?? [];
+                this.history = data.history ?? [];
             },
         }"
     >
@@ -105,9 +98,6 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
-                            <template x-if="refreshing && waiting.length === 0">
-                                <x-skeleton-table-row :cols="$canManageQueue ? 4 : 3" />
-                            </template>
                             <template x-for="entry in waiting" :key="entry.id">
                                 <tr class="transition-colors duration-150 hover:bg-slate-50">
                                     <td class="whitespace-nowrap px-5 py-4 text-sm font-extrabold text-slate-800" x-text="entry.queue_number"></td>
@@ -134,7 +124,7 @@
                                     @endif
                                 </tr>
                             </template>
-                            <template x-if="!refreshing && waiting.length === 0">
+                            <template x-if="waiting.length === 0">
                                 <tr>
                                     <td colspan="{{ $canManageQueue ? 4 : 3 }}">
                                         <x-empty-state message="No one is waiting." />
@@ -160,9 +150,6 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
-                            <template x-if="refreshing && serving.length === 0">
-                                <x-skeleton-table-row :cols="3" />
-                            </template>
                             <template x-for="entry in serving" :key="entry.id">
                                 <tr class="transition-colors duration-150 hover:bg-slate-50">
                                     <td class="whitespace-nowrap px-5 py-4 text-sm font-extrabold text-slate-800" x-text="entry.queue_number"></td>
@@ -173,7 +160,7 @@
                                     <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-slate-600" x-text="entry.doctor"></td>
                                 </tr>
                             </template>
-                            <template x-if="!refreshing && serving.length === 0">
+                            <template x-if="serving.length === 0">
                                 <tr>
                                     <td colspan="3">
                                         <x-empty-state message="No one is being served." />
@@ -201,9 +188,6 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
-                        <template x-if="refreshing && history.length === 0">
-                            <x-skeleton-table-row :cols="4" />
-                        </template>
                         <template x-for="entry in history" :key="entry.id">
                             <tr class="transition-colors duration-150 hover:bg-slate-50">
                                 <td class="whitespace-nowrap px-5 py-4 text-sm font-extrabold text-slate-800" x-text="entry.queue_number"></td>
@@ -222,7 +206,7 @@
                                 </td>
                             </tr>
                         </template>
-                        <template x-if="!refreshing && history.length === 0">
+                        <template x-if="history.length === 0">
                             <tr>
                                 <td colspan="4">
                                     <x-empty-state message="No queue activity yet today." />

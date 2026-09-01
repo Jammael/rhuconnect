@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Appointment;
 use App\Models\DoctorAvailabilityTemplate;
 use App\Models\Patient;
+use App\Models\PrenatalCase;
 use App\Models\Queue;
 use App\Models\Role;
 use App\Models\User;
@@ -123,9 +124,35 @@ class DashboardStatsTest extends TestCase
         $response->assertOk()
             ->assertSeeInOrder(["Today's Appointments", '2', 'Assigned to you'])
             ->assertSeeInOrder(['Completed Today', '1', 'Consultations closed'])
-            ->assertSeeInOrder(['Patients Waiting', '0', 'Smart Queue module not yet active'])
+            ->assertSeeInOrder(['Patients Waiting', '0', 'Assigned to you'])
             ->assertSee('Liza Mendoza')
             ->assertDontSee('Someone Else');
+    }
+
+    public function test_doctor_dashboard_scopes_patients_waiting_to_their_own_queue_entries(): void
+    {
+        $doctor = $this->userWithRole('Doctor');
+        $otherDoctor = $this->userWithRole('Doctor');
+
+        $ownAppointment = Appointment::factory()->create([
+            'doctor_id' => $doctor->id,
+            'appointment_date' => today(),
+            'status' => 'Approved',
+        ]);
+        $otherAppointment = Appointment::factory()->create([
+            'doctor_id' => $otherDoctor->id,
+            'appointment_date' => today(),
+            'status' => 'Approved',
+        ]);
+
+        Queue::factory()->create(['appointment_id' => $ownAppointment->id, 'queue_number' => 'R-001', 'priority_type' => 'Regular', 'queue_status' => 'Waiting']);
+        // A Waiting entry tied to a DIFFERENT doctor's appointment must not be counted.
+        Queue::factory()->create(['appointment_id' => $otherAppointment->id, 'queue_number' => 'R-002', 'priority_type' => 'Regular', 'queue_status' => 'Waiting']);
+
+        $this->actingAs($doctor)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSeeInOrder(['Patients Waiting', '1', 'Assigned to you']);
     }
 
     public function test_doctor_dashboard_shows_real_availability_status(): void
@@ -177,14 +204,32 @@ class DashboardStatsTest extends TestCase
             ->assertDontSee('R-002');
     }
 
-    public function test_midwife_dashboard_marks_unmodeled_maternal_stats_as_not_yet_active(): void
+    public function test_midwife_dashboard_scopes_maternal_stats_to_their_own_prenatal_cases(): void
     {
         $midwife = $this->userWithRole('Midwife');
+        $otherMidwife = $this->userWithRole('Midwife');
 
-        // Real appointments exist, but since nothing distinguishes "maternal"
-        // appointments in the schema, the Midwife dashboard must not surface
-        // an unfiltered clinic-wide number under the maternal-specific label.
+        // An ordinary appointment with no prenatal case link must never be
+        // counted under a maternal-specific label — that would be exactly
+        // the unfiltered-clinic-wide-number problem this dashboard must
+        // avoid now that real prenatal case data exists.
         Appointment::factory()->create([
+            'appointment_date' => today(),
+            'status' => 'Approved',
+        ]);
+
+        $ownCase = PrenatalCase::factory()->create(['midwife_id' => $midwife->id, 'status' => 'Active']);
+        $otherCase = PrenatalCase::factory()->create(['midwife_id' => $otherMidwife->id, 'status' => 'Active']);
+
+        Appointment::factory()->create([
+            'prenatal_case_id' => $ownCase->id,
+            'appointment_date' => today(),
+            'status' => 'Completed',
+        ]);
+        // A case-linked appointment belonging to a DIFFERENT midwife's case
+        // must not be counted either.
+        Appointment::factory()->create([
+            'prenatal_case_id' => $otherCase->id,
             'appointment_date' => today(),
             'status' => 'Approved',
         ]);
@@ -192,10 +237,10 @@ class DashboardStatsTest extends TestCase
         $response = $this->actingAs($midwife)->get('/dashboard');
 
         $response->assertOk()
-            ->assertSeeInOrder(["Today's Maternal Appointments", '0', 'Maternal care tracking not yet active'])
-            ->assertSeeInOrder(['Active Prenatal Cases', '0', 'Maternal care tracking not yet active'])
-            ->assertSeeInOrder(['Completed Visits', '0', 'Maternal care tracking not yet active'])
-            ->assertSeeInOrder(['Upcoming Follow-ups', '0', 'Maternal care tracking not yet active']);
+            ->assertSeeInOrder(["Today's Maternal Appointments", '1', 'Assigned to you'])
+            ->assertSeeInOrder(['Active Prenatal Cases', '1', 'Currently managed'])
+            ->assertSeeInOrder(['Completed Visits', '1', 'Completed today'])
+            ->assertSeeInOrder(['Upcoming Follow-ups', '0', 'Scheduled ahead']);
     }
 
     public function test_data_encoder_dashboard_shows_clinic_wide_activity_counts(): void
@@ -219,6 +264,49 @@ class DashboardStatsTest extends TestCase
             ->assertSeeInOrder(['Pending Entries', '0', 'Not tracked as a distinct workflow'])
             ->assertSeeInOrder(['SMS Sent Today', '0', 'Clinic-wide today'])
             ->assertSee('Alma Cortez');
+    }
+
+    /**
+     * dashboard.stats-data is the JSON path polled every 10s by
+     * dashboards.partials.overview — it must stay in lockstep with the
+     * stats baked into the page's own initial render for every role, or
+     * polling would silently diverge from what a fresh page load shows.
+     */
+    public function test_stats_data_endpoint_matches_the_dashboard_page_stat_labels_for_each_role(): void
+    {
+        $expectedLabels = [
+            'Administrator' => ["Today's Appointments", 'Patients in Queue', 'Completed Visits', 'Available Doctors'],
+            'Doctor' => ["Today's Appointments", 'Patients Waiting', 'Completed Today', 'Next Appointment'],
+            'Nurse' => ['Patients in Queue', 'Vitals Recorded Today', 'Waiting for Doctor', 'Priority Cases'],
+            'Midwife' => ["Today's Maternal Appointments", 'Active Prenatal Cases', 'Completed Visits', 'Upcoming Follow-ups'],
+            'Data Encoder' => ['Patients Encoded Today', 'Pending Entries', 'Appointments Entered Today', 'SMS Sent Today'],
+        ];
+
+        foreach ($expectedLabels as $roleName => $labels) {
+            $user = $this->userWithRole($roleName);
+            $pageUrl = $roleName === 'Administrator' ? route('admin.dashboard') : route('dashboard');
+
+            $pageResponse = $this->actingAs($user)->get($pageUrl);
+            $pageResponse->assertOk();
+
+            foreach ($labels as $label) {
+                $pageResponse->assertSee($label);
+            }
+
+            $jsonResponse = $this->actingAs($user)->getJson(route('dashboard.stats-data'));
+            $jsonResponse->assertOk();
+
+            $jsonStats = $jsonResponse->json('stats');
+
+            $this->assertCount(count($labels), $jsonStats, "Role {$roleName}: stat count mismatch between page and JSON.");
+            $this->assertSame($labels, array_column($jsonStats, 'label'), "Role {$roleName}: stat labels/order mismatch between page and JSON.");
+
+            foreach ($jsonStats as $stat) {
+                $this->assertArrayHasKey('value', $stat);
+                $this->assertArrayHasKey('caption', $stat);
+                $this->assertArrayHasKey('tone', $stat);
+            }
+        }
     }
 
     private function userWithRole(string $roleName, array $attributes = []): User

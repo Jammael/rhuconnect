@@ -221,6 +221,10 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'patient_id' => ['required', Rule::exists('patients', 'id')->withoutTrashed()],
             'doctor_id' => ['required', Rule::exists('users', 'id')],
+            'prenatal_case_id' => [
+                'nullable',
+                Rule::exists('prenatal_cases', 'id')->where(fn ($query) => $query->where('patient_id', $request->input('patient_id'))),
+            ],
             'appointment_date' => ['required', 'date', 'after_or_equal:today'],
             'appointment_time' => ['required', 'date_format:H:i'],
             'purpose_of_visit' => ['required', 'string', 'max:255'],

@@ -20,10 +20,36 @@
         excludeAppointmentId: @js($appointment->id),
         slots: [],
         loadingSlots: false,
+        prenatalCase: null,
+        linkPrenatalCase: @js((bool) old('prenatal_case_id', $appointment->prenatal_case_id)),
 
         init() {
             if (this.doctorId && this.appointmentDate) {
                 this.fetchSlots();
+            }
+            if (this.selectedPatientId) {
+                this.fetchPrenatalCase();
+            }
+        },
+
+        async fetchPrenatalCase() {
+            this.prenatalCase = null;
+
+            if (! this.selectedPatientId) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/prenatal-cases/active-for-patient/${this.selectedPatientId}`, {
+                    headers: { 'Accept': 'application/json' },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.prenatalCase = data.case;
+                }
+            } catch (err) {
+                console.error('Fetching prenatal case failed:', err);
             }
         },
 
@@ -60,11 +86,15 @@
             this.patientQuery = '';
             this.patientResults = [];
             this.showPatientResults = false;
+            this.linkPrenatalCase = false;
+            this.fetchPrenatalCase();
         },
 
         clearPatient() {
             this.selectedPatientId = null;
             this.selectedPatientName = '';
+            this.prenatalCase = null;
+            this.linkPrenatalCase = false;
         },
 
         async fetchSlots() {
@@ -152,6 +182,17 @@
             </div>
 
             @error('patient_id') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+
+            <div x-show="prenatalCase" x-cloak class="mt-4 rounded-lg border border-purple-100 bg-purple-50 px-4 py-3">
+                <label class="flex items-start gap-3">
+                    <input type="checkbox" name="prenatal_case_id_checkbox" x-model="linkPrenatalCase" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-700 focus:ring-green-700">
+                    <span class="text-sm text-slate-700">
+                        <span class="font-semibold text-slate-900">Link to active prenatal case</span> —
+                        <span x-text="prenatalCase?.label"></span>
+                    </span>
+                </label>
+                <input type="hidden" name="prenatal_case_id" x-bind:value="linkPrenatalCase ? prenatalCase?.id : ''">
+            </div>
         </div>
     </section>
 

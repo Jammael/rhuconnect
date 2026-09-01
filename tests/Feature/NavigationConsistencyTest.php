@@ -28,7 +28,7 @@ class NavigationConsistencyTest extends TestCase
         ], Navigation::forRole('Nurse'));
 
         $this->assertSame([
-            'MAIN MENU' => ['Dashboard', ['label' => 'Maternal Care Appointments', 'route' => 'appointments.index', 'active' => 'appointments.*'], 'Patient Records', 'Visit History', 'Profile'],
+            'MAIN MENU' => ['Dashboard', ['label' => 'Maternal Care Appointments', 'route' => 'appointments.index', 'active' => 'appointments.*'], ['label' => 'Prenatal Cases', 'route' => 'prenatal-cases.index', 'active' => 'prenatal-cases.*'], 'Patient Records', ['label' => 'Visit History', 'route' => 'visit-history.index', 'active' => 'visit-history.*'], 'Profile'],
         ], Navigation::forRole('Midwife'));
 
         $this->assertSame([

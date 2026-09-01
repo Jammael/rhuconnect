@@ -17,6 +17,7 @@ class Appointment extends Model
     protected $fillable = [
         'patient_id',
         'doctor_id',
+        'prenatal_case_id',
         'appointment_date',
         'appointment_time',
         'purpose_of_visit',
@@ -39,6 +40,11 @@ class Appointment extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function prenatalCase(): BelongsTo
+    {
+        return $this->belongsTo(PrenatalCase::class);
     }
 
     public function queue(): HasOne
