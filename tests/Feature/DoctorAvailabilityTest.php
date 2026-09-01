@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Appointment;
 use App\Models\DoctorAvailabilityException;
 use App\Models\DoctorAvailabilityTemplate;
+use App\Models\Patient;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\DoctorAvailabilityService;
@@ -237,6 +239,102 @@ class DoctorAvailabilityTest extends TestCase
         $customSlots = $service->getAvailableSlots($doctor, $nextTuesday);
         // Default 30min slots: 13:00, 13:30, 14:00, 14:30
         $this->assertSame(['13:00', '13:30', '14:00', '14:30'], $customSlots);
+    }
+
+    public function test_slot_generation_excludes_booked_appointments_by_status(): void
+    {
+        $doctor = $this->userWithRole('Doctor');
+        $service = app(DoctorAvailabilityService::class);
+        $patient = Patient::factory()->create();
+
+        // Monday template: 08:00 - 10:00, 30 min duration -> 08:00, 08:30, 09:00, 09:30
+        DoctorAvailabilityTemplate::create([
+            'doctor_id' => $doctor->id,
+            'day_of_week' => 1,
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
+            'slot_duration_minutes' => 30,
+            'is_active' => true,
+        ]);
+
+        $nextMonday = Carbon::now()->next(Carbon::MONDAY);
+
+        // Pending appointment removes its slot.
+        $pending = Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'appointment_date' => $nextMonday->format('Y-m-d'),
+            'appointment_time' => '08:00:00',
+            'status' => 'Pending',
+        ]);
+
+        $this->assertSame(
+            ['08:30', '09:00', '09:30'],
+            $service->getAvailableSlots($doctor, $nextMonday)
+        );
+
+        // Approved appointment removes its slot too.
+        Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'appointment_date' => $nextMonday->format('Y-m-d'),
+            'appointment_time' => '08:30:00',
+            'status' => 'Approved',
+        ]);
+
+        $this->assertSame(
+            ['09:00', '09:30'],
+            $service->getAvailableSlots($doctor, $nextMonday)
+        );
+
+        // Cancelled appointment does NOT remove its slot.
+        Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'appointment_date' => $nextMonday->format('Y-m-d'),
+            'appointment_time' => '09:00:00',
+            'status' => 'Cancelled',
+        ]);
+
+        $this->assertSame(
+            ['09:00', '09:30'],
+            $service->getAvailableSlots($doctor, $nextMonday)
+        );
+
+        // No Show appointment does NOT remove its slot.
+        Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'appointment_date' => $nextMonday->format('Y-m-d'),
+            'appointment_time' => '09:00:00',
+            'status' => 'No Show',
+        ]);
+
+        $this->assertSame(
+            ['09:00', '09:30'],
+            $service->getAvailableSlots($doctor, $nextMonday)
+        );
+
+        // Completed appointment DOES remove its slot (the visit already happened).
+        Appointment::factory()->create([
+            'patient_id' => $patient->id,
+            'doctor_id' => $doctor->id,
+            'appointment_date' => $nextMonday->format('Y-m-d'),
+            'appointment_time' => '09:30:00',
+            'status' => 'Completed',
+        ]);
+
+        $this->assertSame(
+            ['09:00'],
+            $service->getAvailableSlots($doctor, $nextMonday)
+        );
+
+        // Excluding the pending appointment's own id brings its slot back
+        // (used when editing that same appointment without changing its time).
+        $this->assertSame(
+            ['08:00', '09:00'],
+            $service->getAvailableSlots($doctor, $nextMonday, $pending->id)
+        );
     }
 
     private function userWithRole(string $roleName, array $attributes = []): User

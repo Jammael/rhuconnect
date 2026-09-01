@@ -1,14 +1,3 @@
-@php
-    $roleLabel = auth()->user()->role?->name ?? 'Staff';
-    $navGroups = match ($roleLabel) {
-        'Administrator' => [
-            'MAIN MENU' => ['Dashboard', 'Patient Records', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
-            'SYSTEM' => [['label' => 'User Management', 'route' => 'admin.users.index', 'active' => 'admin.users.*']],
-        ],
-        default => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'Profile']],
-    };
-@endphp
-
 @extends('layouts.dashboard', [
     'pageTitle' => 'Doctor Availability',
     'pageSubtitle' => 'Configure recurring schedules and date exceptions for RHU doctors.',
@@ -17,9 +6,6 @@
         ['label' => 'Dashboard', 'link' => route('dashboard')],
         ['label' => 'Doctor Availability'],
     ],
-    'portalLabel' => 'Admin Portal',
-    'roleLabel' => $roleLabel,
-    'navGroups' => $navGroups,
     'user' => auth()->user(),
 ])
 
@@ -37,7 +23,7 @@
 
         <div class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
             <div class="border-b border-slate-100 px-5 py-4">
-                <h3 class="text-base font-extrabold text-slate-900">RHU Medical Doctors</h3>
+                <h3 class="text-lg font-extrabold text-slate-900">RHU Medical Doctors</h3>
                 <p class="mt-1 text-xs font-medium text-slate-500">Select a doctor to adjust their weekly recurring schedule or manage holiday/leave overrides.</p>
             </div>
 
@@ -53,7 +39,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
                         @forelse ($doctors as $doctor)
-                            <tr class="card-hover">
+                            <tr class="transition-colors duration-150 hover:bg-slate-50">
                                 <td class="whitespace-nowrap px-5 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-extrabold text-green-700">
@@ -65,7 +51,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-5 py-4">
+                                <td class="whitespace-nowrap px-5 py-4">
                                     <span class="text-sm font-semibold text-slate-700">{{ $doctor->schedule_summary }}</span>
                                 </td>
                                 <td class="whitespace-nowrap px-5 py-4">
@@ -98,8 +84,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-5 py-10 text-center text-sm font-medium text-slate-500">
-                                    No active doctors found in the system.
+                                <td colspan="4">
+                                    <x-empty-state message="No active doctors found in the system." />
                                 </td>
                             </tr>
                         @endforelse

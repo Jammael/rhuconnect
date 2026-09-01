@@ -1,18 +1,3 @@
-@php
-    $roleLabel = auth()->user()->role?->name ?? 'Staff';
-    $navGroups = match ($roleLabel) {
-        'Administrator' => [
-            'MAIN MENU' => ['Dashboard', 'Patient Records', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
-            'SYSTEM' => [['label' => 'User Management', 'route' => 'admin.users.index', 'active' => 'admin.users.*']],
-        ],
-        'Doctor' => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'My Appointments', 'My Availability', 'Patient Visit History', 'Profile']],
-        'Nurse' => ['MAIN MENU' => ['Dashboard', 'Patient Queue', 'Patient Records', 'Vitals/Triage', 'Profile']],
-        'Midwife' => ['MAIN MENU' => ['Dashboard', 'Maternal Care Appointments', 'Patient Records', 'Visit History', 'Profile']],
-        'Data Encoder' => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'Appointment Entry', 'SMS Notifications Log', 'Profile']],
-        default => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'Profile']],
-    };
-@endphp
-
 @extends('layouts.dashboard', [
     'pageTitle' => 'Patient Records',
     'pageSubtitle' => 'Manage RHUConnect patient information.',
@@ -21,9 +6,6 @@
         ['label' => 'Dashboard', 'link' => route('dashboard')],
         ['label' => 'Patient Records'],
     ],
-    'portalLabel' => $roleLabel === 'Administrator' ? 'Admin Portal' : $roleLabel.' Portal',
-    'roleLabel' => $roleLabel,
-    'navGroups' => $navGroups,
     'user' => auth()->user(),
 ])
 
@@ -70,7 +52,7 @@
                 @endforeach
             </select>
 
-            <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">Filter</button>
+            <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">Filter</button>
         </form>
 
         <div class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
@@ -88,7 +70,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
                         @forelse ($patients as $patient)
-                            <tr class="card-hover">
+                            <tr class="transition-colors duration-150 hover:bg-slate-50">
                                 <td class="whitespace-nowrap px-5 py-4">
                                     <p class="text-sm font-bold text-slate-900">{{ $patient->full_name }}</p>
                                     <p class="text-xs font-medium text-slate-500">{{ $patient->address }}</p>
@@ -107,14 +89,14 @@
                                 </td>
                                 <td class="whitespace-nowrap px-5 py-4 text-right text-sm font-semibold">
                                     <div class="flex flex-wrap justify-end gap-2">
-                                        <a href="{{ route('patients.show', $patient) }}" class="rounded-lg px-2.5 py-1.5 text-green-700 transition hover:bg-green-50 hover:text-green-900">View</a>
+                                        <a href="{{ route('patients.show', $patient) }}" class="rounded-lg px-2.5 py-1.5 text-green-700 transition hover:bg-green-50 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500">View</a>
                                         @unless ($patient->trashed())
-                                            <a href="{{ route('patients.edit', $patient) }}" class="rounded-lg px-2.5 py-1.5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-900">Edit</a>
+                                            <a href="{{ route('patients.edit', $patient) }}" class="rounded-lg px-2.5 py-1.5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400">Edit</a>
                                             @if ($canArchive)
                                                 <form method="POST" action="{{ route('patients.archive', $patient) }}">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <button type="submit" class="rounded-lg px-2.5 py-1.5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-900">Archive</button>
+                                                    <button type="submit" class="rounded-lg px-2.5 py-1.5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400">Archive</button>
                                                 </form>
                                             @endif
                                         @else
@@ -122,7 +104,7 @@
                                                 <form method="POST" action="{{ route('patients.restore', $patient->id) }}">
                                                     @csrf
                                                     @method('PATCH')
-                                                    <button type="submit" class="rounded-lg px-2.5 py-1.5 text-green-700 transition hover:bg-green-50 hover:text-green-900">Restore</button>
+                                                    <button type="submit" class="rounded-lg px-2.5 py-1.5 text-green-700 transition hover:bg-green-50 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500">Restore</button>
                                                 </form>
                                             @endif
                                         @endunless
@@ -131,7 +113,9 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-5 py-10 text-center text-sm font-medium text-slate-500">No patient records found.</td>
+                                <td colspan="6">
+                                    <x-empty-state message="No patient records found." />
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>

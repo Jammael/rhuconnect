@@ -69,7 +69,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white">
-                    @foreach ($primary['rows'] as $row)
+                    @forelse ($primary['rows'] as $row)
                         @php $badgeTone = $toneClasses[$row['status']['tone']] ?? $toneClasses['gray']; @endphp
                         <tr>
                             @if (isset($row['queue']))
@@ -94,7 +94,13 @@
                                 <span class="inline-flex rounded-full px-3 py-1 text-xs font-extrabold {{ $badgeTone['badge'] }}">{{ $row['status']['label'] }}</span>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="{{ count($primary['columns']) }}">
+                                <x-empty-state :message="$primary['empty_message'] ?? 'No records found.'" />
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -106,20 +112,39 @@
             @foreach ($actions as $action)
                 @php
                     $tone = $toneClasses[$action['tone']] ?? $toneClasses['green'];
-                    $href = isset($action['route']) && $action['route'] && Route::has($action['route']) ? route($action['route']) : '#';
+                    $href = $action['href'] ?? (isset($action['route']) && $action['route'] && Route::has($action['route']) ? route($action['route']) : '#');
+                    $comingSoon = $href === '#';
                 @endphp
-                <a href="{{ $href }}" class="card-hover group flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:border-green-100 hover:bg-green-50/50">
-                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl {{ $tone['icon'] }}">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M12 5v14" />
-                            <path d="M5 12h14" />
-                        </svg>
-                    </span>
-                    <span>
-                        <span class="block text-sm font-extrabold text-slate-800 group-hover:text-green-700">{{ $action['label'] }}</span>
-                        <span class="mt-0.5 block text-xs font-medium leading-5 text-slate-500">{{ $action['description'] }}</span>
-                    </span>
-                </a>
+                @if ($comingSoon)
+                    <div class="flex cursor-not-allowed items-center gap-3 rounded-xl border border-slate-100 p-3 opacity-50">
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl {{ $tone['icon'] }}">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 5v14" />
+                                <path d="M5 12h14" />
+                            </svg>
+                        </span>
+                        <span>
+                            <span class="flex items-center gap-2">
+                                <span class="block text-sm font-extrabold text-slate-800">{{ $action['label'] }}</span>
+                                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-slate-500">Coming soon</span>
+                            </span>
+                            <span class="mt-0.5 block text-xs font-medium leading-5 text-slate-500">{{ $action['description'] }}</span>
+                        </span>
+                    </div>
+                @else
+                    <a href="{{ $href }}" class="card-hover group flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:border-green-100 hover:bg-green-50/50">
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl {{ $tone['icon'] }}">
+                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 5v14" />
+                                <path d="M5 12h14" />
+                            </svg>
+                        </span>
+                        <span>
+                            <span class="block text-sm font-extrabold text-slate-800 group-hover:text-green-700">{{ $action['label'] }}</span>
+                            <span class="mt-0.5 block text-xs font-medium leading-5 text-slate-500">{{ $action['description'] }}</span>
+                        </span>
+                    </a>
+                @endif
             @endforeach
         </div>
     </section>
@@ -129,7 +154,7 @@
     <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
         <h3 class="text-lg font-extrabold text-slate-900">{{ $secondary['title'] }}</h3>
         <div class="mt-4 grid gap-3 md:grid-cols-2">
-            @foreach ($secondary['items'] as $item)
+            @forelse ($secondary['items'] as $item)
                 @php $badgeTone = $toneClasses[$item['status']['tone']] ?? $toneClasses['gray']; @endphp
                 <div class="card-hover flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/70 p-4">
                     <div>
@@ -138,7 +163,11 @@
                     </div>
                     <span class="shrink-0 rounded-full px-3 py-1 text-xs font-extrabold {{ $badgeTone['badge'] }}">{{ $item['status']['label'] }}</span>
                 </div>
-            @endforeach
+            @empty
+                <div class="md:col-span-2">
+                    <x-empty-state :message="$secondary['empty_message'] ?? 'No records found.'" />
+                </div>
+            @endforelse
         </div>
     </section>
 @endisset

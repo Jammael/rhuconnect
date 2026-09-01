@@ -1,17 +1,4 @@
 @php
-    $roleLabel = auth()->user()->role?->name ?? 'Staff';
-    $navGroups = match ($roleLabel) {
-        'Administrator' => [
-            'MAIN MENU' => ['Dashboard', 'Patient Records', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
-            'SYSTEM' => [['label' => 'User Management', 'route' => 'admin.users.index', 'active' => 'admin.users.*']],
-        ],
-        'Doctor' => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'My Appointments', 'My Availability', 'Patient Visit History', 'Profile']],
-        'Nurse' => ['MAIN MENU' => ['Dashboard', 'Patient Queue', 'Patient Records', 'Vitals/Triage', 'Profile']],
-        'Midwife' => ['MAIN MENU' => ['Dashboard', 'Maternal Care Appointments', 'Patient Records', 'Visit History', 'Profile']],
-        'Data Encoder' => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'Appointment Entry', 'SMS Notifications Log', 'Profile']],
-        default => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'Profile']],
-    };
-
     $value = fn ($text) => filled($text) ? $text : 'Not recorded';
 @endphp
 
@@ -24,9 +11,6 @@
         ['label' => 'Patient Records', 'link' => route('patients.index')],
         ['label' => $patient->full_name],
     ],
-    'portalLabel' => $roleLabel === 'Administrator' ? 'Admin Portal' : $roleLabel.' Portal',
-    'roleLabel' => $roleLabel,
-    'navGroups' => $navGroups,
     'user' => auth()->user(),
 ])
 
@@ -126,7 +110,7 @@
                     <form method="POST" action="{{ route('patients.archive', $patient) }}">
                         @csrf
                         @method('PATCH')
-                        <button type="submit" class="inline-flex justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">
+                        <button type="submit" class="inline-flex justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
                             Archive Patient
                         </button>
                     </form>

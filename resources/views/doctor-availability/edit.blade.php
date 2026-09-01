@@ -1,16 +1,6 @@
 @php
-    $roleLabel = auth()->user()->role?->name ?? 'Staff';
     $isAdmin = auth()->user()->hasRole('Administrator');
     $isOwnSchedule = auth()->id() === $doctor->id;
-
-    $navGroups = match ($roleLabel) {
-        'Administrator' => [
-            'MAIN MENU' => ['Dashboard', 'Patient Records', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
-            'SYSTEM' => [['label' => 'User Management', 'route' => 'admin.users.index', 'active' => 'admin.users.*']],
-        ],
-        'Doctor' => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'My Appointments', 'My Availability', 'Patient Visit History', 'Profile']],
-        default => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'Profile']],
-    };
 
     $pageTitle = $isOwnSchedule ? 'My Availability Schedule' : "Availability: {$doctor->name}";
 @endphp
@@ -24,9 +14,6 @@
         ['label' => 'Doctor Availability', 'link' => route('doctor-availability.index')],
         ['label' => $pageTitle],
     ],
-    'portalLabel' => $isAdmin ? 'Admin Portal' : 'Doctor Portal',
-    'roleLabel' => $roleLabel,
-    'navGroups' => $navGroups,
     'user' => auth()->user(),
 ])
 
@@ -47,13 +34,13 @@
             <div class="flex items-center gap-2 rounded-xl bg-slate-200/60 p-1">
                 <a
                     href="{{ route('doctor-availability.edit', $doctor) }}"
-                    class="rounded-lg bg-white px-4 py-2 text-xs font-bold text-slate-900 shadow-xs"
+                    class="rounded-lg bg-white px-4 py-2 text-xs font-bold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                     Weekly Recurring Schedule
                 </a>
                 <a
                     href="{{ route('doctor-availability.exceptions', $doctor) }}"
-                    class="rounded-lg px-4 py-2 text-xs font-bold text-slate-600 transition hover:text-slate-900"
+                    class="rounded-lg px-4 py-2 text-xs font-bold text-slate-600 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                     Date Exceptions & Overrides
                 </a>
@@ -62,7 +49,7 @@
             @if ($isAdmin)
                 <a
                     href="{{ route('doctor-availability.index') }}"
-                    class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-slate-800"
+                    class="inline-flex items-center gap-1.5 rounded text-xs font-bold text-slate-500 transition hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                     ← Back to Doctors List
                 </a>
@@ -89,7 +76,7 @@
                         <select
                             id="slot_duration_minutes"
                             name="slot_duration_minutes"
-                            class="w-full rounded-lg border-slate-300 text-sm font-semibold text-slate-800 shadow-xs focus:border-green-600 focus:ring-green-600"
+                            class="w-full rounded-lg border-slate-300 text-sm font-semibold text-slate-800 shadow-sm focus:border-green-600 focus:ring-green-600"
                         >
                             <option value="15" @selected(old('slot_duration_minutes', $slotDuration) == 15)>15 minutes</option>
                             <option value="30" @selected(old('slot_duration_minutes', $slotDuration) == 30)>30 minutes (Standard)</option>
@@ -106,7 +93,7 @@
             {{-- 7 Days Configuration Card --}}
             <div class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
                 <div class="border-b border-slate-100 px-5 py-4">
-                    <h3 class="text-base font-extrabold text-slate-900">Weekly Shift Template</h3>
+                    <h3 class="text-lg font-extrabold text-slate-900">Weekly Shift Template</h3>
                     <p class="mt-1 text-xs font-medium text-slate-500">Toggle active days and specify standard consulting hours for each day.</p>
                 </div>
 
@@ -141,26 +128,26 @@
                             </div>
 
                             {{-- Working Hours Inputs --}}
-                            <div class="flex items-center gap-3" x-show="active" x-transition>
-                                <div class="flex items-center gap-2">
+                            <div class="grid grid-cols-2 gap-3 sm:flex sm:items-center" x-show="active" x-transition>
+                                <div class="flex min-w-0 items-center gap-2">
                                     <label class="text-xs font-bold text-slate-500">From</label>
                                     <input
                                         type="time"
                                         name="days[{{ $dayIndex }}][start_time]"
                                         value="{{ old("days.{$dayIndex}.start_time", $day['start_time']) }}"
-                                        class="rounded-lg border-slate-300 text-sm font-semibold text-slate-800 shadow-xs focus:border-green-600 focus:ring-green-600"
+                                        class="w-full min-w-0 rounded-lg border-slate-300 text-sm font-semibold text-slate-800 shadow-sm focus:border-green-600 focus:ring-green-600 sm:w-auto"
                                     />
                                 </div>
 
-                                <span class="text-slate-300">—</span>
+                                <span class="hidden text-slate-300 sm:inline">—</span>
 
-                                <div class="flex items-center gap-2">
+                                <div class="flex min-w-0 items-center gap-2">
                                     <label class="text-xs font-bold text-slate-500">To</label>
                                     <input
                                         type="time"
                                         name="days[{{ $dayIndex }}][end_time]"
                                         value="{{ old("days.{$dayIndex}.end_time", $day['end_time']) }}"
-                                        class="rounded-lg border-slate-300 text-sm font-semibold text-slate-800 shadow-xs focus:border-green-600 focus:ring-green-600"
+                                        class="w-full min-w-0 rounded-lg border-slate-300 text-sm font-semibold text-slate-800 shadow-sm focus:border-green-600 focus:ring-green-600 sm:w-auto"
                                     />
                                 </div>
                             </div>

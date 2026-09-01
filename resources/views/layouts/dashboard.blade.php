@@ -24,13 +24,13 @@
         'Dashboard' => '<path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M9 21v-6h6v6" />',
         'Online Appointments' => '<rect width="18" height="16" x="3" y="5" rx="2" /><path d="M8 3v4" /><path d="M16 3v4" /><path d="M3 10h18" />',
         'My Appointments' => '<rect width="18" height="16" x="3" y="5" rx="2" /><path d="M8 3v4" /><path d="M16 3v4" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" />',
+        'Appointments' => '<rect width="18" height="16" x="3" y="5" rx="2" /><path d="M8 3v4" /><path d="M16 3v4" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" />',
         'Maternal Care Appointments' => '<rect width="18" height="16" x="3" y="5" rx="2" /><path d="M8 3v4" /><path d="M16 3v4" /><path d="M9 15h6" /><path d="M12 12v6" />',
         'Appointment Entry' => '<path d="M8 4h8" /><path d="M9 2h6v4H9z" /><path d="M6 4h-.5A2.5 2.5 0 0 0 3 6.5v12A2.5 2.5 0 0 0 5.5 21h13a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 18.5 4H18" /><path d="M8 13h5" /><path d="M8 17h8" />',
         'Smart Queue' => '<path d="M8 6h13" /><path d="M8 12h13" /><path d="M8 18h13" /><path d="M3 6h.01" /><path d="M3 12h.01" /><path d="M3 18h.01" />',
         'Patient Queue' => '<path d="M8 6h13" /><path d="M8 12h13" /><path d="M8 18h13" /><path d="M4 6h.01" /><path d="M4 12h.01" /><path d="M4 18h.01" />',
         'Doctor Availability' => '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="m16 11 2 2 4-4" />',
         'My Availability' => '<circle cx="9" cy="7" r="4" /><path d="M2 21v-2a4 4 0 0 1 4-4h4" /><path d="M16 17h6" /><path d="M19 14v6" />',
-        'Slot Capacity' => '<path d="M4 19V5" /><path d="M8 17v-6" /><path d="M12 17V7" /><path d="M16 17v-4" /><path d="M20 17V9" />',
         'Patient Visit History' => '<path d="M8 4h8" /><path d="M9 2h6v4H9z" /><path d="M6 4h-.5A2.5 2.5 0 0 0 3 6.5v12A2.5 2.5 0 0 0 5.5 21h13a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 18.5 4H18" /><path d="M8 13h4" /><path d="M8 17h7" /><path d="M16 13h.01" />',
         'Visit History' => '<path d="M8 4h8" /><path d="M9 2h6v4H9z" /><path d="M6 4h-.5A2.5 2.5 0 0 0 3 6.5v12A2.5 2.5 0 0 0 5.5 21h13a2.5 2.5 0 0 0 2.5-2.5v-12A2.5 2.5 0 0 0 18.5 4H18" /><path d="M8 13h4" /><path d="M8 17h7" />',
         'Reports & Analytics' => '<path d="M3 3v18h18" /><path d="m7 15 4-4 3 3 5-7" /><path d="M19 7v5h-5" />',
@@ -147,7 +147,7 @@
                     x-bind:aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
                     x-bind:title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
                 >
-                    <svg class="h-4 w-4 transition-transform duration-200" x-bind:class="{ 'rotate-180': sidebarCollapsed }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg class="h-4 w-4 transition-transform duration-200" x-bind:class="{ 'rotate-180': sidebarCollapsed }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="m15 18-6-6 6-6" />
                     </svg>
                 </button>
@@ -235,12 +235,12 @@
                                 'left-full top-1/2 ml-2 -translate-y-1/2': sidebarCollapsed && isDesktop,
                             }"
                         >
-                            <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-green-700">
+                            <a href="{{ route('profile.edit') }}" class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-green-700 focus:bg-slate-50 focus:text-green-700 focus:outline-none">
                                 Profile
                             </a>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50">
+                                <button type="submit" class="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50 focus:bg-red-50 focus:outline-none">
                                     Logout
                                 </button>
                             </form>
@@ -273,7 +273,7 @@
                                 x-on:click="$dispatch('open-command-palette')"
                                 aria-label="Search"
                             >
-                                <svg class="h-5 w-5 shrink-0 text-slate-400 transition-colors duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <svg class="h-5 w-5 shrink-0 text-slate-400 transition-colors duration-150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <circle cx="11" cy="11" r="8" />
                                     <path d="m21 21-4.3-4.3" />
                                 </svg>
@@ -419,7 +419,7 @@
                                         <h2 class="text-sm font-extrabold text-slate-900">Notifications</h2>
                                         <button
                                             type="button"
-                                            class="text-xs font-bold text-green-700 transition hover:text-green-900 disabled:cursor-default disabled:text-slate-300"
+                                            class="rounded text-xs font-bold text-green-700 transition hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:cursor-default disabled:text-slate-300"
                                             x-on:click="markAllAsRead()"
                                             x-bind:disabled="unreadCount === 0"
                                         >
@@ -429,15 +429,13 @@
 
                                     <div class="max-h-96 overflow-y-auto p-2">
                                         <template x-if="notifications.length === 0">
-                                            <div class="px-4 py-8 text-center text-sm font-medium text-slate-500">
-                                                No notifications yet
-                                            </div>
+                                            <x-empty-state message="No notifications yet" />
                                         </template>
 
                                         <template x-for="notification in notifications" x-bind:key="notification.id">
                                             <button
                                                 type="button"
-                                                class="flex w-full gap-3 rounded-lg px-3 py-3 text-left transition hover:bg-slate-50"
+                                                class="flex w-full gap-3 rounded-lg px-3 py-3 text-left transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
                                                 x-on:click="markAsRead(notification)"
                                             >
                                                 <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700">
@@ -630,7 +628,7 @@
                 x-on:keydown.enter.prevent="navigateSelected()"
             >
                 <div class="relative flex items-center border-b border-slate-100 px-4 py-3.5">
-                    <svg class="mr-3 h-5 w-5 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <svg class="mr-3 h-5 w-5 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.3-4.3" />
                     </svg>
@@ -655,7 +653,7 @@
                         </template>
                         <button
                             type="button"
-                            class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"
+                            class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 transition hover:bg-slate-200 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-green-500"
                             x-on:click="closePalette()"
                         >
                             ESC
@@ -667,7 +665,7 @@
                     <template x-if="query.trim().length < 2">
                         <div class="px-6 py-10 text-center">
                             <div class="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <circle cx="11" cy="11" r="8" />
                                     <path d="m21 21-4.3-4.3" />
                                 </svg>
@@ -704,7 +702,7 @@
                                                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
                                                         :class="selectedIndex === pIdx ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'"
                                                     >
-                                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                                                             <path d="M14 2v6h6" />
                                                             <path d="M8 13h8" />
@@ -741,7 +739,7 @@
                                                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
                                                         :class="selectedIndex === (results.patients.length + uIdx) ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'"
                                                     >
-                                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                                                             <circle cx="9" cy="7" r="4" />
                                                             <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -778,7 +776,7 @@
                                                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
                                                         :class="selectedIndex === (results.patients.length + results.users.length + pgIdx) ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'"
                                                     >
-                                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                                             <path d="M3 10.5 12 3l9 7.5" />
                                                             <path d="M5 9.5V21h14V9.5" />
                                                         </svg>
@@ -849,8 +847,8 @@
                 >
                     <div class="flex items-start justify-between gap-3">
                         <p class="text-sm font-semibold leading-5 text-slate-800" x-text="toast.message"></p>
-                        <button type="button" class="shrink-0 text-slate-400 transition hover:text-slate-700" x-on:click="removeToast(toast.id)" aria-label="Dismiss notification">
-                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <button type="button" class="shrink-0 rounded text-slate-400 transition hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500" x-on:click="removeToast(toast.id)" aria-label="Dismiss notification">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M18 6 6 18" />
                                 <path d="m6 6 12 12" />
                             </svg>

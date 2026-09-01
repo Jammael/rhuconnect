@@ -1,16 +1,6 @@
 @php
-    $roleLabel = auth()->user()->role?->name ?? 'Staff';
     $isAdmin = auth()->user()->hasRole('Administrator');
     $isOwnSchedule = auth()->id() === $doctor->id;
-
-    $navGroups = match ($roleLabel) {
-        'Administrator' => [
-            'MAIN MENU' => ['Dashboard', 'Patient Records', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
-            'SYSTEM' => [['label' => 'User Management', 'route' => 'admin.users.index', 'active' => 'admin.users.*']],
-        ],
-        'Doctor' => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'My Appointments', 'My Availability', 'Patient Visit History', 'Profile']],
-        default => ['MAIN MENU' => ['Dashboard', 'Patient Records', 'Profile']],
-    };
 
     $pageTitle = $isOwnSchedule ? 'My Availability Exceptions' : "Exceptions: {$doctor->name}";
 @endphp
@@ -24,9 +14,6 @@
         ['label' => 'Doctor Availability', 'link' => route('doctor-availability.index')],
         ['label' => $pageTitle],
     ],
-    'portalLabel' => $isAdmin ? 'Admin Portal' : 'Doctor Portal',
-    'roleLabel' => $roleLabel,
-    'navGroups' => $navGroups,
     'user' => auth()->user(),
 ])
 
@@ -47,13 +34,13 @@
             <div class="flex items-center gap-2 rounded-xl bg-slate-200/60 p-1">
                 <a
                     href="{{ route('doctor-availability.edit', $doctor) }}"
-                    class="rounded-lg px-4 py-2 text-xs font-bold text-slate-600 transition hover:text-slate-900"
+                    class="rounded-lg px-4 py-2 text-xs font-bold text-slate-600 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                     Weekly Recurring Schedule
                 </a>
                 <a
                     href="{{ route('doctor-availability.exceptions', $doctor) }}"
-                    class="rounded-lg bg-white px-4 py-2 text-xs font-bold text-slate-900 shadow-xs"
+                    class="rounded-lg bg-white px-4 py-2 text-xs font-bold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                     Date Exceptions & Overrides
                 </a>
@@ -62,7 +49,7 @@
             @if ($isAdmin)
                 <a
                     href="{{ route('doctor-availability.index') }}"
-                    class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-slate-800"
+                    class="inline-flex items-center gap-1.5 rounded text-xs font-bold text-slate-500 transition hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                     ← Back to Doctors List
                 </a>
@@ -72,7 +59,7 @@
         {{-- Add Exception Form Card --}}
         <div class="card-hover rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
             <div class="border-b border-slate-100 pb-4">
-                <h3 class="text-base font-extrabold text-slate-900">Add Date Exception / Override</h3>
+                <h3 class="text-lg font-extrabold text-slate-900">Add Date Exception / Override</h3>
                 <p class="mt-0.5 text-xs font-medium text-slate-500">Record a leave date (fully unavailable) or a date with custom consulting hours.</p>
             </div>
 
@@ -109,7 +96,7 @@
                             id="is_available"
                             name="is_available"
                             x-model="isAvailable"
-                            class="mt-1 w-full rounded-lg border-slate-300 text-sm font-semibold text-slate-800 shadow-xs focus:border-green-600 focus:ring-green-600"
+                            class="mt-1 w-full rounded-lg border-slate-300 text-sm font-semibold text-slate-800 shadow-sm focus:border-green-600 focus:ring-green-600"
                         >
                             <option value="0">Unavailable (Leave / Holiday / Off)</option>
                             <option value="1">Available (Custom Hours Override)</option>
@@ -128,7 +115,7 @@
                             name="reason"
                             value="{{ old('reason') }}"
                             placeholder="e.g. Official Business, National Holiday, Medical Conference"
-                            class="mt-1 w-full rounded-lg border-slate-300 text-sm font-medium text-slate-800 shadow-xs focus:border-green-600 focus:ring-green-600"
+                            class="mt-1 w-full rounded-lg border-slate-300 text-sm font-medium text-slate-800 shadow-sm focus:border-green-600 focus:ring-green-600"
                         />
                         @error('reason')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -149,7 +136,7 @@
                                     id="start_time"
                                     name="start_time"
                                     value="{{ old('start_time', '08:00') }}"
-                                    class="h-10 rounded-lg border-slate-300 bg-white pl-9 text-sm font-semibold text-slate-800 shadow-xs transition-colors duration-150 hover:border-green-300 focus:border-green-600 focus:ring-green-600"
+                                    class="h-10 rounded-lg border-slate-300 bg-white pl-9 text-sm font-semibold text-slate-800 shadow-sm transition-colors duration-150 hover:border-green-300 focus:border-green-600 focus:ring-green-600"
                                 />
                             </div>
                         </div>
@@ -165,7 +152,7 @@
                                     id="end_time"
                                     name="end_time"
                                     value="{{ old('end_time', '12:00') }}"
-                                    class="h-10 rounded-lg border-slate-300 bg-white pl-9 text-sm font-semibold text-slate-800 shadow-xs transition-colors duration-150 hover:border-green-300 focus:border-green-600 focus:ring-green-600"
+                                    class="h-10 rounded-lg border-slate-300 bg-white pl-9 text-sm font-semibold text-slate-800 shadow-sm transition-colors duration-150 hover:border-green-300 focus:border-green-600 focus:ring-green-600"
                                 />
                             </div>
                         </div>
@@ -192,7 +179,7 @@
         {{-- Existing Exceptions List --}}
         <div class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
             <div class="border-b border-slate-100 px-5 py-4">
-                <h3 class="text-base font-extrabold text-slate-900">Recorded Exceptions & Overrides</h3>
+                <h3 class="text-lg font-extrabold text-slate-900">Recorded Exceptions & Overrides</h3>
                 <p class="mt-0.5 text-xs font-medium text-slate-500">List of active and historical date-specific availability overrides for this doctor.</p>
             </div>
 
@@ -208,7 +195,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
                         @forelse ($exceptions as $exception)
-                            <tr class="card-hover">
+                            <tr class="transition-colors duration-150 hover:bg-slate-50">
                                 <td class="whitespace-nowrap px-5 py-4 text-sm font-extrabold text-slate-900">
                                     {{ $exception->date->format('M d, Y / l') }}
                                     @if ($exception->date->isPast() && ! $exception->date->isToday())
@@ -241,7 +228,7 @@
                                         @method('DELETE')
                                         <button
                                             type="submit"
-                                            class="rounded-lg px-2.5 py-1 text-xs font-bold text-red-600 transition hover:bg-red-50 hover:text-red-800"
+                                            class="rounded-lg px-2.5 py-1 text-xs font-bold text-red-600 transition hover:bg-red-50 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-red-400"
                                         >
                                             Delete
                                         </button>
@@ -250,8 +237,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-5 py-10 text-center text-sm font-medium text-slate-500">
-                                    No date exceptions recorded yet.
+                                <td colspan="4">
+                                    <x-empty-state message="No date exceptions recorded yet." />
                                 </td>
                             </tr>
                         @endforelse

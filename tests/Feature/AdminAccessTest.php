@@ -78,4 +78,18 @@ class AdminAccessTest extends TestCase
             ->assertDontSee('Dr. Elena Cruz')
             ->assertDontSee('Dr. Marco Lim');
     }
+
+    public function test_admin_dashboard_quick_actions_link_to_real_routes_and_mute_unbuilt_ones(): void
+    {
+        $administrator = User::factory()->create([
+            'role_id' => Role::factory()->administrator()->create()->id,
+        ]);
+
+        $response = $this->actingAs($administrator)->get('/admin/dashboard');
+
+        $response->assertOk()
+            ->assertSee('href="'.route('appointments.index').'"', false)
+            ->assertSee('href="'.route('queue.index').'"', false)
+            ->assertSeeInOrder(['Generate Reports', 'Coming soon']);
+    }
 }

@@ -7,12 +7,6 @@
         ['label' => 'User Management', 'link' => route('admin.users.index')],
         ['label' => $managedUser->name],
     ],
-    'portalLabel' => 'Admin Portal',
-    'roleLabel' => 'Administrator',
-    'navGroups' => [
-        'MAIN MENU' => ['Dashboard', 'Patient Records', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
-        'SYSTEM' => [['label' => 'User Management', 'route' => 'admin.users.index', 'active' => 'admin.users.*']],
-    ],
     'user' => auth()->user(),
 ])
 
@@ -76,7 +70,7 @@
                     @csrf
                     @method('PATCH')
                     <input type="hidden" name="account_status" value="{{ $managedUser->account_status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' }}">
-                    <button type="submit" class="inline-flex justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">
+                    <button type="submit" class="inline-flex justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
                         {{ $managedUser->account_status === 'ACTIVE' ? 'Deactivate Account' : 'Activate Account' }}
                     </button>
                 </form>

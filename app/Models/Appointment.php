@@ -55,4 +55,9 @@ class Appointment extends Model
     {
         return $this->hasMany(SmsNotification::class);
     }
+
+    public function vitals(): HasOne
+    {
+        return $this->hasOne(Vitals::class);
+    }
 }

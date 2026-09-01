@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Appointment;
 use App\Models\DoctorAvailabilityException;
 use App\Models\DoctorAvailabilityTemplate;
 use App\Models\User;
@@ -21,16 +22,17 @@ class DoctorAvailabilityService
      *    - Look up recurring day_of_week template (0=Sun, 1=Mon, ..., 6=Sat).
      *    - If no template found or is_active = false -> returns empty array [].
      * 3. Divide time range into slot_duration_minutes increments.
-     *
-     * NOTE: This does NOT yet exclude already-booked appointment slots,
-     * since the Appointments module doesn't exist yet — this will need to be
-     * extended later to subtract booked slots once appointments.doctor_id + date + time exist.
+     * 4. Subtract slots already booked by an Appointment for this doctor/date.
+     *    Cancelled and No Show appointments do NOT block their slot (it's
+     *    free again); every other status (Pending, Approved, Completed) does.
      *
      * @param User $doctor
      * @param CarbonInterface|string $date
+     * @param int|null $excludeAppointmentId Ignore this appointment's own booked slot
+     *   (used when editing an appointment so its current time still appears as available).
      * @return array<string> Array of time slots formatted as ['08:00', '08:30', ...]
      */
-    public function getAvailableSlots(User $doctor, CarbonInterface|string $date): array
+    public function getAvailableSlots(User $doctor, CarbonInterface|string $date, ?int $excludeAppointmentId = null): array
     {
         $carbonDate = is_string($date) ? Carbon::parse($date) : $date->copy();
         $dateString = $carbonDate->format('Y-m-d');
@@ -57,12 +59,14 @@ class DoctorAvailabilityService
 
                 $slotDuration = $template?->slot_duration_minutes ?? 30;
 
-                return $this->generateSlots(
+                $slots = $this->generateSlots(
                     $carbonDate,
                     $exception->start_time,
                     $exception->end_time,
                     $slotDuration
                 );
+
+                return $this->excludeBookedSlots($slots, $doctor, $dateString, $excludeAppointmentId);
             }
         }
 
@@ -76,12 +80,34 @@ class DoctorAvailabilityService
             return [];
         }
 
-        return $this->generateSlots(
+        $slots = $this->generateSlots(
             $carbonDate,
             $template->start_time,
             $template->end_time,
             $template->slot_duration_minutes
         );
+
+        return $this->excludeBookedSlots($slots, $doctor, $dateString, $excludeAppointmentId);
+    }
+
+    /**
+     * Remove slots already booked by a non-freed Appointment for this doctor/date.
+     *
+     * @param array<string> $slots
+     * @return array<string>
+     */
+    protected function excludeBookedSlots(array $slots, User $doctor, string $dateString, ?int $excludeAppointmentId): array
+    {
+        $bookedTimes = Appointment::query()
+            ->where('doctor_id', $doctor->id)
+            ->whereDate('appointment_date', $dateString)
+            ->whereNotIn('status', ['Cancelled', 'No Show'])
+            ->when($excludeAppointmentId, fn ($query) => $query->whereKeyNot($excludeAppointmentId))
+            ->pluck('appointment_time')
+            ->map(fn ($time) => Carbon::parse($time)->format('H:i'))
+            ->all();
+
+        return array_values(array_diff($slots, $bookedTimes));
     }
 
     /**

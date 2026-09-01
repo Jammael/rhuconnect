@@ -60,7 +60,7 @@ class PatientController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $patient = Patient::create($this->patientAttributes($request));
+        $patient = Patient::create($this->patientAttributes($request, new Patient()));
 
         return redirect()
             ->route('patients.show', $patient)
@@ -86,7 +86,7 @@ class PatientController extends Controller
 
     public function update(Request $request, Patient $patient): RedirectResponse
     {
-        $patient->update($this->patientAttributes($request));
+        $patient->update($this->patientAttributes($request, $patient));
 
         return redirect()
             ->route('patients.show', $patient)
@@ -114,7 +114,7 @@ class PatientController extends Controller
             ->with('status', 'Patient record restored successfully.');
     }
 
-    private function patientAttributes(Request $request): array
+    private function patientAttributes(Request $request, Patient $patient): array
     {
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:100'],
@@ -125,7 +125,11 @@ class PatientController extends Controller
             'civil_status' => ['nullable', Rule::in(['Single', 'Married', 'Widowed', 'Separated'])],
             'address' => ['required', 'string', 'max:2000'],
             'barangay' => ['nullable', 'string', 'max:150'],
-            'contact_number' => ['required', 'regex:/^\+?[0-9\s-]{7,20}$/'],
+            'contact_number' => [
+                'required',
+                'regex:/^\+?[0-9\s-]{7,20}$/',
+                Rule::unique('patients', 'contact_number')->ignore($patient->id),
+            ],
             'email' => ['nullable', 'email', 'max:255'],
             'philhealth_id' => ['nullable', 'string', 'max:50'],
             'blood_type' => ['nullable', Rule::in(self::BLOOD_TYPES)],
@@ -136,6 +140,8 @@ class PatientController extends Controller
             'current_medications' => ['nullable', 'string'],
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
             'emergency_contact_number' => ['nullable', 'regex:/^\+?[0-9\s-]{7,20}$/'],
+        ], [
+            'contact_number.unique' => 'A patient with this contact number already exists.',
         ]);
 
         $validated['birthdate'] = $validated['date_of_birth'];

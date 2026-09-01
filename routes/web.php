@@ -1,13 +1,19 @@
 <?php
 
+use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DoctorAvailabilityController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QueueController;
 use App\Http\Controllers\SessionCloseController;
+use App\Http\Controllers\SmsNotificationController;
+use App\Http\Controllers\VisitHistoryController;
+use App\Http\Controllers\VitalsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,6 +42,12 @@ Route::middleware(['auth', 'idle', 'verified', 'active', 'role:Administrator'])
         Route::resource('users', UserManagementController::class)->except(['destroy']);
         Route::patch('users/{user}/status', [UserManagementController::class, 'updateStatus'])
             ->name('users.status');
+
+        Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
+        Route::get('reports/export/appointment-volume', [ReportsController::class, 'exportAppointmentVolume'])->name('reports.export.appointments');
+        Route::get('reports/export/doctor-utilization', [ReportsController::class, 'exportDoctorUtilization'])->name('reports.export.doctors');
+        Route::get('reports/export/patient-demographics', [ReportsController::class, 'exportPatientDemographics'])->name('reports.export.demographics');
+        Route::get('reports/export/queue-turnaround', [ReportsController::class, 'exportQueueTurnaround'])->name('reports.export.queue');
     });
 
 Route::middleware(['auth', 'idle', 'active'])->group(function () {
@@ -53,6 +65,24 @@ Route::middleware(['auth', 'idle', 'active'])->group(function () {
     Route::resource('patients', PatientController::class)->except(['destroy'])->withTrashed(['show']);
     Route::patch('/patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
     Route::patch('/patients/{patient}/restore', [PatientController::class, 'restore'])->name('patients.restore');
+
+    Route::get('/appointments/available-slots', [AppointmentController::class, 'availableSlots'])->name('appointments.available-slots');
+    Route::resource('appointments', AppointmentController::class)->except(['destroy']);
+    Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'updateStatus'])->name('appointments.status');
+    Route::post('/appointments/{appointment}/vitals', [VitalsController::class, 'store'])->name('vitals.store');
+
+    Route::get('/vitals', [VitalsController::class, 'index'])->name('vitals.index');
+
+    Route::get('/queue', [QueueController::class, 'index'])->name('queue.index');
+    Route::get('/queue/board-data', [QueueController::class, 'boardData'])->name('queue.board-data');
+    Route::post('/queue/{appointment}/check-in', [QueueController::class, 'checkIn'])->name('queue.check-in');
+    Route::post('/queue/call-next', [QueueController::class, 'callNext'])->name('queue.call-next');
+    Route::patch('/queue/{queue}/status', [QueueController::class, 'updateStatus'])->name('queue.status');
+
+    Route::get('/visit-history', [VisitHistoryController::class, 'index'])->name('visit-history.index');
+    Route::get('/visit-history/{visitHistory}', [VisitHistoryController::class, 'show'])->name('visit-history.show');
+
+    Route::get('/sms-notifications', [SmsNotificationController::class, 'index'])->name('sms-notifications.index');
 
     Route::get('/doctor-availability', [DoctorAvailabilityController::class, 'index'])->name('doctor-availability.index');
     Route::get('/doctor-availability/{doctor}/edit', [DoctorAvailabilityController::class, 'edit'])->name('doctor-availability.edit');

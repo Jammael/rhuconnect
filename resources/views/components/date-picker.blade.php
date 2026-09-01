@@ -158,7 +158,7 @@
             <path d="M3 10h18" />
         </svg>
         <span class="min-w-0 flex-1 truncate" x-text="formattedDate()"></span>
-        <svg class="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150" x-bind:class="{ 'rotate-180': open }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150" x-bind:class="{ 'rotate-180': open }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m6 9 6 6 6-6" />
         </svg>
     </button>
@@ -180,7 +180,7 @@
     >
         <div class="mb-4 flex items-center justify-between gap-2">
             <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-600" x-on:click="previousMonth()" aria-label="Previous month">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
             </button>
             <div class="flex min-w-0 flex-1 items-center justify-center gap-2">
                 <label class="sr-only" for="{{ $id }}-month">Month</label>
@@ -197,7 +197,7 @@
                 </select>
             </div>
             <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-600" x-on:click="nextMonth()" aria-label="Next month">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
             </button>
         </div>
 

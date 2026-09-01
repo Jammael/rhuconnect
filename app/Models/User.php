@@ -54,11 +54,6 @@ class User extends Authenticatable
         return $this->role !== null && in_array($this->role->name, $roles, true);
     }
 
-    public function doctorAvailabilities(): HasMany
-    {
-        return $this->hasMany(DoctorAvailability::class, 'doctor_id');
-    }
-
     public function availabilityTemplates(): HasMany
     {
         return $this->hasMany(DoctorAvailabilityTemplate::class, 'doctor_id');

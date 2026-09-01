@@ -4,67 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\Patient;
 use App\Models\User;
+use App\Support\Navigation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class GlobalSearchController extends Controller
 {
     /**
-     * Role-to-nav mapping mirrors the navGroups defined in dashboard.blade.php.
-     * When the nav changes there, update this list to match.
+     * Fallback routes for bare-string nav labels — these don't carry a
+     * 'route' key in Navigation::forRole()'s nested structure because
+     * layouts/dashboard.blade.php's $navHref closure already resolves them
+     * by hardcoded label match. Bare-string labels not listed here (e.g.
+     * "Smart Queue") intentionally have no route yet — preserve their
+     * href="#" placeholder behavior, don't invent one.
      */
-    private const NAV_BY_ROLE = [
-        'Administrator' => [
-            'Dashboard',
-            'Patient Records',
-            'Online Appointments',
-            'Smart Queue',
-            'Doctor Availability',
-            'Slot Capacity',
-            'Patient Visit History',
-            'Reports & Analytics',
-            'SMS Notifications',
-            'User Management',
-        ],
-        'Doctor' => [
-            'Dashboard',
-            'Patient Records',
-            'My Appointments',
-            'My Availability',
-            'Patient Visit History',
-            'Profile',
-        ],
-        'Nurse' => [
-            'Dashboard',
-            'Patient Queue',
-            'Patient Records',
-            'Vitals/Triage',
-            'Profile',
-        ],
-        'Midwife' => [
-            'Dashboard',
-            'Maternal Care Appointments',
-            'Patient Records',
-            'Visit History',
-            'Profile',
-        ],
-        'Data Encoder' => [
-            'Dashboard',
-            'Patient Records',
-            'Appointment Entry',
-            'SMS Notifications Log',
-            'Profile',
-        ],
-    ];
-
-    /** Route map for nav items that have a registered Laravel route. */
     private const NAV_ROUTES = [
-        'Dashboard'              => 'dashboard',
-        'Patient Records'        => 'patients.index',
-        'User Management'        => 'admin.users.index',
-        'Profile'                => 'profile.edit',
-        'Doctor Availability'    => 'doctor-availability.index',
-        'My Availability'        => 'doctor-availability.index',
+        'Dashboard'            => 'dashboard',
+        'Patient Records'      => 'patients.index',
+        'Profile'              => 'profile.edit',
+        'Doctor Availability'  => 'doctor-availability.index',
+        'My Availability'      => 'doctor-availability.index',
     ];
 
     private const RESULT_LIMIT = 5;
@@ -160,19 +119,24 @@ class GlobalSearchController extends Controller
      */
     private function searchPages(string $query, User $actor): array
     {
-        $roleName   = $actor->role?->name ?? '';
-        $allowedNav = self::NAV_BY_ROLE[$roleName] ?? [];
-        $lower      = mb_strtolower($query);
+        $roleName       = $actor->role?->name ?? '';
+        $allowedNav     = Navigation::flatLabelsForRole($roleName);
+        $embeddedRoutes = Navigation::routesForRole($roleName);
+        $lower          = mb_strtolower($query);
 
         return collect($allowedNav)
             ->filter(fn (string $label) => str_contains(mb_strtolower($label), $lower))
             ->take(self::RESULT_LIMIT)
-            ->map(fn (string $label) => [
-                'label' => $label,
-                'link'  => isset(self::NAV_ROUTES[$label]) && \Illuminate\Support\Facades\Route::has(self::NAV_ROUTES[$label])
-                    ? route(self::NAV_ROUTES[$label])
-                    : '#',
-            ])
+            ->map(function (string $label) use ($embeddedRoutes) {
+                $routeName = $embeddedRoutes[$label] ?? self::NAV_ROUTES[$label] ?? null;
+
+                return [
+                    'label' => $label,
+                    'link'  => $routeName && \Illuminate\Support\Facades\Route::has($routeName)
+                        ? route($routeName)
+                        : '#',
+                ];
+            })
             ->values()
             ->all();
     }

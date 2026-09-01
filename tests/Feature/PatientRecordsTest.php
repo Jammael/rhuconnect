@@ -63,6 +63,7 @@ class PatientRecordsTest extends TestCase
                 ->put(route('patients.update', $patient), $this->validPatientData([
                     'first_name' => 'Updated',
                     'last_name' => $roleName,
+                    'contact_number' => '0917200000'.array_search($roleName, self::STAFF_ROLES, true),
                 ]))
                 ->assertSessionHasNoErrors()
                 ->assertRedirect(route('patients.show', $patient));

@@ -6,12 +6,6 @@
         ['label' => 'Dashboard', 'link' => route('dashboard')],
         ['label' => 'User Management'],
     ],
-    'portalLabel' => 'Admin Portal',
-    'roleLabel' => 'Administrator',
-    'navGroups' => [
-        'MAIN MENU' => ['Dashboard', 'Patient Records', 'Online Appointments', 'Smart Queue', 'Doctor Availability', 'Slot Capacity', 'Patient Visit History', 'Reports & Analytics', 'SMS Notifications'],
-        'SYSTEM' => [['label' => 'User Management', 'route' => 'admin.users.index', 'active' => 'admin.users.*']],
-    ],
     'user' => auth()->user(),
 ])
 
@@ -98,9 +92,9 @@
             >
                 <p class="text-sm font-extrabold text-green-800"><span x-text="selectedIds.length"></span> selected</p>
                 <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" class="rounded-lg bg-green-700 px-3.5 py-2 text-xs font-extrabold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60" x-on:click="updateSelected('ACTIVE')" x-bind:disabled="updating">Activate Selected</button>
-                    <button type="button" class="rounded-lg bg-slate-800 px-3.5 py-2 text-xs font-extrabold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60" x-on:click="updateSelected('INACTIVE')" x-bind:disabled="updating">Deactivate Selected</button>
-                    <button type="button" class="rounded-lg px-2 py-2 text-xs font-bold text-slate-600 transition hover:text-green-700" x-on:click="selectedIds = []">Clear selection</button>
+                    <button type="button" class="rounded-lg bg-green-700 px-3.5 py-2 text-xs font-extrabold text-white transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" x-on:click="updateSelected('ACTIVE')" x-bind:disabled="updating">Activate Selected</button>
+                    <button type="button" class="rounded-lg bg-slate-800 px-3.5 py-2 text-xs font-extrabold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60" x-on:click="updateSelected('INACTIVE')" x-bind:disabled="updating">Deactivate Selected</button>
+                    <button type="button" class="rounded-lg px-2 py-2 text-xs font-bold text-slate-600 transition hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500" x-on:click="selectedIds = []">Clear selection</button>
                 </div>
             </div>
 
@@ -121,7 +115,7 @@
                     @endforeach
                 </select>
 
-                <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">Filter</button>
+                <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">Filter</button>
             </form>
 
             <div class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
@@ -179,7 +173,7 @@
                                                         @csrf
                                                         @method('PATCH')
                                                         <input type="hidden" name="account_status" value="{{ $user->account_status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' }}">
-                                                        <button type="submit" class="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-green-700">{{ $user->account_status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}</button>
+                                                        <button type="submit" class="block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-green-700 focus:bg-slate-50 focus:text-green-700 focus:outline-none">{{ $user->account_status === 'ACTIVE' ? 'Deactivate' : 'Activate' }}</button>
                                                     </form>
                                                 @endunless
                                             </div>
@@ -188,7 +182,9 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-5 py-10 text-center text-sm font-medium text-slate-500">No users found.</td>
+                                    <td colspan="6">
+                                        <x-empty-state message="No users found." />
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
