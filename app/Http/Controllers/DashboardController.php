@@ -66,7 +66,7 @@ class DashboardController extends Controller
             'actions' => [
                 ['label' => 'Manage Appointments', 'description' => 'Review bookings and walk-ins.', 'route' => 'appointments.index', 'tone' => 'green'],
                 ['label' => 'Manage Smart Queue', 'description' => 'Prioritize current patient flow.', 'route' => 'queue.index', 'tone' => 'orange'],
-                ['label' => 'Generate Reports', 'description' => 'Prepare operational summaries.', 'route' => null, 'tone' => 'blue'],
+                ['label' => 'Generate Reports', 'description' => 'Prepare operational summaries.', 'route' => 'admin.reports.index', 'tone' => 'blue'],
                 ['label' => 'User Management', 'description' => 'Provision staff access.', 'route' => 'admin.users.index', 'tone' => 'purple'],
             ],
             'secondary' => [

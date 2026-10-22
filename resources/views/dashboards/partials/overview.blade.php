@@ -85,7 +85,7 @@
 </div>
 
 <div class="mt-6 grid gap-6 xl:grid-cols-3">
-    <section class="card-hover min-w-0 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 xl:col-span-2">
+    <section class="min-w-0 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 xl:col-span-2">
         <div class="border-b border-slate-100 px-5 py-4">
             <h3 class="text-lg font-extrabold text-slate-900">{{ $primary['title'] }}</h3>
         </div>

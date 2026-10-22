@@ -90,6 +90,7 @@ class AdminAccessTest extends TestCase
         $response->assertOk()
             ->assertSee('href="'.route('appointments.index').'"', false)
             ->assertSee('href="'.route('queue.index').'"', false)
-            ->assertSeeInOrder(['Generate Reports', 'Coming soon']);
+            ->assertSee('href="'.route('admin.reports.index').'"', false)
+            ->assertDontSee('Coming soon');
     }
 }

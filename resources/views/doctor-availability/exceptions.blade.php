@@ -57,7 +57,7 @@
         </div>
 
         {{-- Add Exception Form Card --}}
-        <div class="card-hover rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
+        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
             <div class="border-b border-slate-100 pb-4">
                 <h3 class="text-lg font-extrabold text-slate-900">Add Date Exception / Override</h3>
                 <p class="mt-0.5 text-xs font-medium text-slate-500">Record a leave date (fully unavailable) or a date with custom consulting hours.</p>
@@ -177,7 +177,7 @@
         </div>
 
         {{-- Existing Exceptions List --}}
-        <div class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
             <div class="border-b border-slate-100 px-5 py-4">
                 <h3 class="text-lg font-extrabold text-slate-900">Recorded Exceptions & Overrides</h3>
                 <p class="mt-0.5 text-xs font-medium text-slate-500">List of active and historical date-specific availability overrides for this doctor.</p>

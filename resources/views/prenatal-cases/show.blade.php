@@ -90,7 +90,7 @@
             </div>
         </div>
 
-        <section class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
+        <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
             <div class="border-b border-slate-100 px-5 py-4">
                 <h3 class="text-lg font-extrabold text-slate-900">Linked Appointments</h3>
             </div>

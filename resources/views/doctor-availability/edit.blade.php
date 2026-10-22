@@ -62,7 +62,7 @@
             @method('PUT')
 
             {{-- Global Slot Duration Setting --}}
-            <div class="card-hover rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
+            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <label for="slot_duration_minutes" class="text-sm font-extrabold text-slate-900">
@@ -91,7 +91,7 @@
             </div>
 
             {{-- 7 Days Configuration Card --}}
-            <div class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
+            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
                 <div class="border-b border-slate-100 px-5 py-4">
                     <h3 class="text-lg font-extrabold text-slate-900">Weekly Shift Template</h3>
                     <p class="mt-1 text-xs font-medium text-slate-500">Toggle active days and specify standard consulting hours for each day.</p>

@@ -18,7 +18,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('appointments.store') }}" class="card-hover rounded-xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
+        <form method="POST" action="{{ route('appointments.store') }}" class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/60">
             @include('appointments._form', ['submitLabel' => 'Book Appointment'])
         </form>
     </div>

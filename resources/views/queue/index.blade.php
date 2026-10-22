@@ -81,7 +81,7 @@
         @endif
 
         <div class="grid gap-6 xl:grid-cols-2">
-            <section class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
+            <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
                 <div class="border-b border-slate-100 px-5 py-4">
                     <h3 class="text-lg font-extrabold text-slate-900">Waiting</h3>
                 </div>
@@ -136,7 +136,7 @@
                 </div>
             </section>
 
-            <section class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
+            <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
                 <div class="border-b border-slate-100 px-5 py-4">
                     <h3 class="text-lg font-extrabold text-slate-900">Currently Serving</h3>
                 </div>
@@ -173,7 +173,7 @@
             </section>
         </div>
 
-        <section class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
+        <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
             <div class="border-b border-slate-100 px-5 py-4">
                 <h3 class="text-lg font-extrabold text-slate-900">Today's History</h3>
             </div>

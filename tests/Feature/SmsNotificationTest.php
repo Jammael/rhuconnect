@@ -10,6 +10,7 @@ use App\Models\SmsNotification;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SmsNotificationTest extends TestCase
@@ -147,6 +148,74 @@ class SmsNotificationTest extends TestCase
         $this->actingAs($this->userWithRole('Administrator'))
             ->get(route('sms-notifications.index', ['page' => 2]))
             ->assertOk();
+    }
+
+    public function test_real_gateway_send_marks_notification_sent_on_successful_response(): void
+    {
+        config(['services.semaphore.api_key' => 'test-key', 'services.semaphore.sender_name' => 'RHUCONNECT']);
+        Http::fake(['api.semaphore.co/*' => Http::response([['message_id' => 1, 'status' => 'Pending']], 200)]);
+
+        $doctor = $this->userWithRole('Doctor');
+        $patient = Patient::factory()->create(['contact_number' => '0917 123 4567']);
+        $appointment = Appointment::factory()->create([
+            'doctor_id' => $doctor->id,
+            'patient_id' => $patient->id,
+            'status' => 'Pending',
+        ]);
+
+        $this->actingAs($this->userWithRole('Administrator'))
+            ->patch(route('appointments.status', $appointment), ['status' => 'Approved'])
+            ->assertSessionHasNoErrors();
+
+        $notification = SmsNotification::query()->where('appointment_id', $appointment->id)->firstOrFail();
+        $this->assertSame('Sent', $notification->delivery_status);
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://api.semaphore.co/api/v4/messages'
+                && $request['apikey'] === 'test-key'
+                && $request['number'] === '09171234567'
+                && $request['sendername'] === 'RHUCONNECT';
+        });
+    }
+
+    public function test_real_gateway_send_marks_notification_failed_on_error_response(): void
+    {
+        config(['services.semaphore.api_key' => 'test-key']);
+        Http::fake(['api.semaphore.co/*' => Http::response(['message' => 'Invalid API key'], 401)]);
+
+        $doctor = $this->userWithRole('Doctor');
+        $appointment = Appointment::factory()->create(['doctor_id' => $doctor->id, 'status' => 'Pending']);
+
+        $this->actingAs($this->userWithRole('Administrator'))
+            ->patch(route('appointments.status', $appointment), ['status' => 'Approved'])
+            ->assertSessionHasNoErrors();
+
+        $notification = SmsNotification::query()->where('appointment_id', $appointment->id)->firstOrFail();
+        $this->assertSame('Failed', $notification->delivery_status);
+    }
+
+    public function test_real_gateway_send_marks_notification_failed_when_the_request_throws_without_breaking_the_status_update(): void
+    {
+        config(['services.semaphore.api_key' => 'test-key']);
+        Http::fake(function () {
+            throw new \Illuminate\Http\Client\ConnectionException('Connection timed out');
+        });
+
+        $doctor = $this->userWithRole('Doctor');
+        $appointment = Appointment::factory()->create(['doctor_id' => $doctor->id, 'status' => 'Pending']);
+
+        // The status update itself must succeed even though the SMS gateway
+        // is unreachable — a down provider must never block appointment
+        // workflow, only the notification's own delivery_status reflects it.
+        $this->actingAs($this->userWithRole('Administrator'))
+            ->patch(route('appointments.status', $appointment), ['status' => 'Approved'])
+            ->assertSessionHasNoErrors();
+
+        $appointment->refresh();
+        $this->assertSame('Approved', $appointment->status);
+
+        $notification = SmsNotification::query()->where('appointment_id', $appointment->id)->firstOrFail();
+        $this->assertSame('Failed', $notification->delivery_status);
     }
 
     private function doctorWithMondayTemplate(): User

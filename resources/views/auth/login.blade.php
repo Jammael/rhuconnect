@@ -99,6 +99,27 @@
                     </button>
                 </form>
 
+                @if (config('services.google.client_id'))
+                    <div class="mt-6 flex items-center gap-3">
+                        <span class="h-px flex-1 bg-gray-200"></span>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Or</span>
+                        <span class="h-px flex-1 bg-gray-200"></span>
+                    </div>
+
+                    <a
+                        href="{{ route('auth.google.redirect') }}"
+                        class="mt-6 flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    >
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.47a5.53 5.53 0 0 1-2.4 3.63v3h3.88c2.27-2.09 3.57-5.17 3.57-8.82z"/>
+                            <path fill="#34A853" d="M12 24c3.24 0 5.96-1.08 7.95-2.91l-3.88-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.27v3.11A12 12 0 0 0 12 24z"/>
+                            <path fill="#FBBC05" d="M5.27 14.28A7.2 7.2 0 0 1 4.89 12c0-.79.14-1.56.38-2.28V6.61H1.27A12 12 0 0 0 0 12c0 1.93.46 3.76 1.27 5.39l4-3.11z"/>
+                            <path fill="#EA4335" d="M12 4.75c1.76 0 3.34.61 4.58 1.79l3.44-3.44C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.27 6.61l4 3.11C6.22 6.86 8.87 4.75 12 4.75z"/>
+                        </svg>
+                        Continue with Google
+                    </a>
+                @endif
+
                 <p class="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-gray-400">
                     <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <rect width="18" height="11" x="3" y="11" rx="2" />

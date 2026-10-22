@@ -21,7 +21,7 @@
             </script>
         @endif
 
-        <div class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
             <div class="border-b border-slate-100 px-5 py-4">
                 <h3 class="text-lg font-extrabold text-slate-900">RHU Medical Doctors</h3>
                 <p class="mt-1 text-xs font-medium text-slate-500">Select a doctor to adjust their weekly recurring schedule or manage holiday/leave overrides.</p>

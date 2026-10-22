@@ -98,7 +98,7 @@
                 </div>
             </div>
 
-            <form method="GET" action="{{ route('admin.users.index') }}" class="card-hover grid gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 md:grid-cols-[1fr_14rem_12rem_auto]">
+            <form method="GET" action="{{ route('admin.users.index') }}" class="grid gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 md:grid-cols-[1fr_14rem_12rem_auto]">
                 <input name="search" type="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search name or email" class="rounded-lg border-slate-300 shadow-sm focus:border-green-700 focus:ring-green-700">
 
                 <select name="role" class="rounded-lg border-slate-300 shadow-sm focus:border-green-700 focus:ring-green-700">
@@ -118,7 +118,7 @@
                 <button type="submit" class="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">Filter</button>
             </form>
 
-            <div class="card-hover overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
+            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-100">
                         <thead class="bg-slate-50">

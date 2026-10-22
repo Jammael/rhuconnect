@@ -191,8 +191,8 @@ class ReportsService
             'count' => $minutes->count(),
             'avg_minutes' => $minutes->isNotEmpty() ? round($minutes->avg(), 1) : null,
             'median_minutes' => $minutes->isNotEmpty() ? $this->median($minutes->all()) : null,
-            'min_minutes' => $minutes->isNotEmpty() ? $minutes->min() : null,
-            'max_minutes' => $minutes->isNotEmpty() ? $minutes->max() : null,
+            'min_minutes' => $minutes->isNotEmpty() ? round($minutes->min(), 1) : null,
+            'max_minutes' => $minutes->isNotEmpty() ? round($minutes->max(), 1) : null,
             'by_priority' => $byPriority,
         ];
     }
@@ -219,9 +219,9 @@ class ReportsService
         $middle = intdiv($count, 2);
 
         if ($count % 2 === 0) {
-            return ($values[$middle - 1] + $values[$middle]) / 2;
+            return round(($values[$middle - 1] + $values[$middle]) / 2, 1);
         }
 
-        return (float) $values[$middle];
+        return round((float) $values[$middle], 1);
     }
 }
